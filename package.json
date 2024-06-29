@@ -8,7 +8,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "mmoinventory"
+    "url": "https://github.com/carector/MMOInventory"
   },
   "keywords": [
     "sql",
@@ -17,5 +17,10 @@
     "rds"
   ],
   "author": "Caleb Rector",
-  "license": "MIT"
+  "license": "MIT",
+  "dependencies": {
+    "express": "^4.19.2",
+    "express-validator": "^7.1.0",
+    "sequelize": "^6.37.3"
+  }
 }
