@@ -1,4 +1,4 @@
-// Packages
+// Imports
 const express = require('express');
 
 // Local imports

@@ -1,7 +1,5 @@
-// Packages
+// Imports
 const express = require('express');
-
-// Local imports
 const users = require('./users.route.js');
 const items = require('./items.route.js');
 
