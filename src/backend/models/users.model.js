@@ -3,9 +3,6 @@ const {doc, setDoc} = require('firebase/firestore')
 
 // Model
 class User {
-    constructor(name) {
-        this.name = name;
-    }
     constructor(data) {
         this.name = data?.name;
         this.email = data?.email;
@@ -28,3 +25,5 @@ const userConverter = {
         return new User(data);
     }
 }
+
+module.exports = { User, userConverter }

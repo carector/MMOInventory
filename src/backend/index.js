@@ -1,7 +1,7 @@
 // Imports
-import { initializeApp } from 'firebase/app';
-import { getFirestore } from 'firebase/firestore';
-import { getAnalytics } from 'firebase/analytics';
+const { initializeApp } = require('firebase/app');
+const { getFirestore } = require('firebase/firestore');
+const { getAnalytics } = require('firebase/analytics');
 const express = require('express');
 const { Sequelize } = require('sequelize');
 const config = require('./config.json');
@@ -18,9 +18,8 @@ async function init() {
 	// Set up DB connection
 	try {
 		await setUpFirebase();
-	}
-	catch(err) {
-		console.error(`Error initializing Firebase: ${err}`)
+	} catch (err) {
+		console.error(`Error initializing Firebase: ${err}`);
 		return;
 	}
 
@@ -47,7 +46,7 @@ async function setUpFirebase() {
 
 	// Connect to app + db + analytics
 	fb_app = initializeApp(firebaseConfig);
-	fb_db = getFirestore(fb_app)
+	fb_db = getFirestore(fb_app);
 	fb_analytics = getAnalytics(fb_app);
 
 	// Verify connection
