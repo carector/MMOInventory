@@ -6,6 +6,7 @@ const express = require('express');
 const { Sequelize } = require('sequelize');
 const config = require('./config.json');
 const routes = require('./routes/index.route.js');
+require('dotenv').config()
 
 // Definitions
 const port = config.port;
@@ -47,7 +48,7 @@ async function setUpFirebase() {
 	// Connect to app + db + analytics
 	fb_app = initializeApp(firebaseConfig);
 	fb_db = getFirestore(fb_app);
-	fb_analytics = getAnalytics(fb_app);
+	//fb_analytics = getAnalytics(fb_app);
 
 	// Verify connection
 }
