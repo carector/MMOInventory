@@ -7,7 +7,7 @@ const items = require('./items.route.js');
 const router = express.Router();
 
 router.use('/users', users);
-router.use('/items', items);
+router.use('/itemCatalog', items);
 
 router.get('/', (req, res) => res.send('MMO Inventory Project'));
 router.get('/health', (req, res) => {

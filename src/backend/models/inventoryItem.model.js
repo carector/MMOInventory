@@ -1,12 +1,10 @@
 // Model
 class InventoryItem {
-	constructor(userID, itemID, dateUnlocked) {
-		this.userID = userID;
-		this.itemID = itemID;
-        this.dateUnlocked = dateUnlocked;
-	}
-	toString() {
-		return `${this.userID} : ${this.itemID} (Unlocked ${this.dateUnlocked})`;
+	constructor(data) {
+		this.itemPath = data.itemPath;
+		this.equipped = data?.equipped || false;
+		this.quantity = data?.quantity || 1;
+		this.dateObtained = data?.dateObtained;
 	}
 }
 
@@ -14,9 +12,10 @@ class InventoryItem {
 const inventoryItemConverter = {
 	toFirestore: (inventoryItem) => {
 		return {
-			userID: inventoryItem.userID,
-			itemID: inventoryItem.itemID,
-            dateUnlocked: inventoryItem.dateUnlocked
+			itemPath: inventoryItem.itemPath,
+			equipped: inventoryItem.equipped,
+			quantity: inventoryItem.quantity,
+			dateObtained: inventoryItem.dateObtained,
 		};
 	},
 	fromFirestore: (snapshot, options) => {
@@ -25,4 +24,4 @@ const inventoryItemConverter = {
 	},
 };
 
-module.exports = inventoryItemConverter;
+module.exports = {InventoryItem, inventoryItemConverter}

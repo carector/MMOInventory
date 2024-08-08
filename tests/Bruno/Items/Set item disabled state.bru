@@ -1,0 +1,17 @@
+meta {
+  name: Set item disabled state
+  type: http
+  seq: 5
+}
+
+patch {
+  url: http://localhost:3030/itemCatalog/updateDisabledState/Uv9wwlEwMSAqVFHzomQj
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "disabled": true
+  }
+}

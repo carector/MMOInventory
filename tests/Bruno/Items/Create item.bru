@@ -1,0 +1,19 @@
+meta {
+  name: Create item
+  type: http
+  seq: 4
+}
+
+post {
+  url: http://localhost:3030/itemCatalog/
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "baseItemName": "Buttcheek on a stick",
+    "description": "Wow... Must be painful",
+    "stackable": false
+  }
+}
