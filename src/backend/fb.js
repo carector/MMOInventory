@@ -1,6 +1,10 @@
 // Imports
 const { initializeApp } = require('firebase/app');
-const { initializeFirestore, collection, getDocs } = require('firebase/firestore');
+const {
+	initializeFirestore,
+	collection,
+	getDocs,
+} = require('firebase/firestore');
 const { getAnalytics } = require('firebase/analytics');
 require('dotenv').config(); // TODO: Figure out why this is required for anything using .env file
 
@@ -8,7 +12,7 @@ require('dotenv').config(); // TODO: Figure out why this is required for anythin
 let db;
 let app;
 
-const setupFirebase = async() => {
+const setupFirebase = async () => {
 	// Set up config
 	const firebaseConfig = {
 		apiKey: process.env.FIREBASE_API_KEY,
@@ -21,20 +25,24 @@ const setupFirebase = async() => {
 	};
 
 	// Verify .env fields
-	for(const [key, value] of Object.entries(firebaseConfig)) {
-		if(value === undefined) {
-			console.error(`Error initializing Firebase: ${key} not present in environment file`)
+	for (const [key, value] of Object.entries(firebaseConfig)) {
+		if (value === undefined) {
+			console.error(
+				`Error initializing Firebase: ${key} not present in environment file`
+			);
 			return;
 		}
 	}
-	
+
 	// Connect to app + db
 	app = initializeApp(firebaseConfig);
 	db = initializeFirestore(app, {
-        experimentalForceLongPolling: true,
-    });
-
+		experimentalForceLongPolling: true,
+	});
 	console.log('Firebase initialized');
 };
 
-module.exports = { setupFirebase, db };
+module.exports.setupFirebase = setupFirebase;
+module.exports.getDb = function() {
+	return db;
+}

@@ -6,6 +6,7 @@ class Item {
 		this.stackable = data?.stackable || false;
 		this.thumbnailURL = data?.thumbnailURL || '';
         this.disabledGlobally = data?.disabledGlobally || false;
+		this.adminPrivRequired = data?.adminPrivRequired || false;	// Whether admin privileges are required to view this item or not
 	}
 }
 

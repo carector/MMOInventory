@@ -1,7 +1,7 @@
 meta {
   name: Create item
   type: http
-  seq: 4
+  seq: 3
 }
 
 post {
@@ -16,4 +16,8 @@ body:json {
     "description": "Tasty treat",
     "stackable": true
   }
+}
+
+script:post-response {
+  bru.setVar("itemId", res.body.itemId);
 }

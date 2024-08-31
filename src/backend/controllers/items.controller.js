@@ -5,12 +5,13 @@ const {
 	setDoc,
 	getDoc,
 	getDocs,
+	deleteDoc,
 	updateDoc,
 	collection,
 	addDoc,
 } = require('firebase/firestore');
 
-const { db } = require('../fb.js');
+const { getDb } = require('../fb.js');
 const { Item, itemConverter } = require('../models/items.model.js');
 const { toBool } = require('../common.js');
 
@@ -44,8 +45,13 @@ const vr_enableDisableItemGlobally = [
 		.withMessage('Disabled must be a true/false value'),
 ];
 
+const vr_deleteItemByID = [
+	param('itemID').exists().notEmpty().withMessage('Item ID required'),
+];
+
 // Route endpoints
 const getItemByID = async function (req, res) {
+	const db = getDb()
 	try {
 		const itemCatalogRef = await collection(db, 'itemCatalog');
 		const result = await getDoc(doc(itemCatalogRef, req.params.itemID));
@@ -53,7 +59,7 @@ const getItemByID = async function (req, res) {
 			return res.status(200).send(result.data());
 		} else
 			return res.status(404).send({
-				message: `Item with ID ${req.params.itemID} not found`,
+				error: `Item with ID ${req.params.itemID} not found`,
 			});
 	} catch (e) {
 		console.error(e);
@@ -62,6 +68,7 @@ const getItemByID = async function (req, res) {
 };
 
 const getAllItems = async function (req, res) {
+	const db = getDb()
 	try {
 		const querySnapshot = await getDocs(collection(db, 'itemCatalog'));
         const includeDisabled = toBool(req.body.includeDisabledItems)
@@ -78,10 +85,12 @@ const getAllItems = async function (req, res) {
 };
 
 const createItem = async function (req, res) {
+	// TODO
+	// Require admin auth
+	const db = getDb()
 	try {
 		const ref = collection(db, 'itemCatalog');
 		const u = itemConverter.toFirestore(new Item(req.body));
-		console.log(u);
 		const result = await addDoc(ref, u);
 		return res.status(200).send({
 			message: 'Successfully created item.',
@@ -94,13 +103,17 @@ const createItem = async function (req, res) {
 	}
 };
 
+// Allows admins to disable a certain item game-wide
+// Useful for items / equipment that may be causing bugs or balance issues
 const enableDisableItemGlobally = async function (req, res) {
+	// TODO
+	// Require admin auth
+	const db = getDb()
 	try {
 		const ref = doc(db, 'itemCatalog', req.params.itemID);
 		const result = await updateDoc(ref, {
 			disabledGlobally: toBool(req.body.disabled),
 		});
-        console.log(result)
 		return res.status(200).send({
 			message: 'Successfully updated global enabled/disabled state.',
 			result: result
@@ -111,13 +124,37 @@ const enableDisableItemGlobally = async function (req, res) {
 	}
 };
 
+const deleteItemByID = async function(req, res) {
+	// TODO
+	// Require admin auth
+	const db = getDb()
+	try {
+		const itemCatalogRef = await collection(db, 'itemCatalog');
+		const result = await deleteDoc(doc(itemCatalogRef, req.params.itemID));
+		return res.status(200).send({message: `Item with ID ${req.params.itemID} deleted successfully`});
+	} catch (e) {
+		console.error(e);
+		return res.status(400).send(`Error: ${e}`);
+	}
+}
+
+const importItemsFromJSON = async function(req, res) {
+	// TODO
+	// Requires admin auth
+	// Validate json array of items
+	// - Return errors if present
+	// Create items in DB for each item in JSON
+}
+
 module.exports = {
 	vr_getItemByID,
 	vr_createItem,
 	vr_enableDisableItemGlobally,
+	vr_deleteItemByID,
 
 	getItemByID,
 	getAllItems,
 	createItem,
 	enableDisableItemGlobally,
+	deleteItemByID
 };

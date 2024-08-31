@@ -9,7 +9,7 @@ const {
 	addDoc,
 } = require('firebase/firestore');
 const { userConverter, User } = require('../models/users.model.js');
-const { db } = require('../fb.js');
+const { getDb } = require('../fb.js');
 const { FirebaseError } = require('firebase/app');
 
 // Request body validation rules
@@ -29,6 +29,7 @@ const vr_equipItem = [];
 // Route endpoints
 const createUser = async function (req, res) {
 	console.log('- TEST ADD - ');
+	const db = getDb();
 	try {
 		// Req contents: name
 		const ref = collection(db, 'users');
@@ -47,6 +48,7 @@ const createUser = async function (req, res) {
 };
 
 const getUserByID = async function (req, res) {
+	const db = getDb();
 	try {
 		// Get user from firestore
 		const usersRef = await collection(db, 'users');
@@ -64,6 +66,7 @@ const getUserByID = async function (req, res) {
 };
 
 const getAllUsers = async function (req, res) {
+	const db = getDb();
 	try {
 		const querySnapshot = await getDocs(collection(db, 'users'));
 		let users = [];
@@ -78,6 +81,7 @@ const getAllUsers = async function (req, res) {
 };
 
 const addItemToInventory = (req, res) => {
+	
 	res.send('TODO');
 
 	// Req contents: Item ID

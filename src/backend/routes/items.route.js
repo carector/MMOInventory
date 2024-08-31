@@ -32,4 +32,11 @@ router
 		itemsController.enableDisableItemGlobally
 	);
 
+router
+	.route('/:itemID')
+	.delete(
+		[itemsController.vr_deleteItemByID, checkValidation],
+		itemsController.deleteItemByID
+	);
+
 module.exports = router;

@@ -1,10 +1,10 @@
 meta {
-  name: Get item by ID
+  name: Delete item by ID
   type: http
-  seq: 4
+  seq: 6
 }
 
-get {
+delete {
   url: http://localhost:3030/itemCatalog/{{itemId}}
   body: none
   auth: none
