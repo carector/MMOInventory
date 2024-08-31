@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<head>
+	<script>
+		const port = 3030;
+		const host = 'localhost';
+		document.domain = 'noise.town';
+
+		async function getAllUsers(body) {
+			let button = document.getElementById('usersButton');
+			const url = `http://${host}:${port}/users`;
+
+			button.disabled = true;
+			document.getElementById('usersResponseField').innerHTML = await reusableFetch(url);
+			button.disabled = false;
+		}
+
+		async function getAllItems(body) {
+			let button = document.getElementById('itemsButton');
+			const url = `http://${host}:${port}/itemCatalog`;
+
+			button.disabled = true;
+			document.getElementById('itemsResponseField').innerHTML = await reusableFetch(url);
+			button.disabled = false;
+		}
+
+		async function reusableFetch(url) {
+			try {
+				const res = await fetch(url);
+				if (!res.ok)
+					return (document.getElementById(
+						'itemsResponseField'
+					).innerHTML = 'Could not reach server');
+				const json = await res.json();
+				return JSON.stringify(json);
+			} catch (error) {
+				console.error(error.message);
+			}
+		}
+	</script>
+</head>
+
+<body>
+	<h1>API test page</h1>
+	<p>Click on the button to call the API</p>
+	<button id="itemsButton" onclick="getAllItems()">Get all items</button>
+	<p id="itemsResponseField"></p>
+	<button id="usersButton" onclick="getAllUsers()">Get all users</button>
+	<p id="usersResponseField"></p>
+</body>

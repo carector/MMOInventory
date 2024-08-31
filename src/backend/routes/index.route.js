@@ -2,14 +2,20 @@
 const express = require('express');
 const users = require('./users.route.js');
 const items = require('./items.route.js');
+const path = require('path');
 
 // Definitions
 const router = express.Router();
 
+// Backend endpoints
 router.use('/users', users);
 router.use('/itemCatalog', items);
 
-router.get('/', (req, res) => res.send('MMO Inventory Project'));
+// Test view endpoints
+router.get('/', (req, res) => {
+	res.sendFile(path.join(__dirname, '../', '/views/index.html'));
+});
+
 router.get('/health', (req, res) => {
 	const healthCheck = {
 		uptime: process.uptime(),
