@@ -37,7 +37,7 @@ Coming soon
 
 ### Installation steps
 1. Download the repository and install required packages with `npm init`.
-2. Create a new environment file in the root folder titled `.env`. Add the following fields to allow the API to connect to your Firebase project:
+2. At the project root, add the following fields to the empty `.env` environment file to allow the API to connect to your Firebase project:
 ```
 FIREBASE_API_KEY
 FIREBASE_AUTH_DOMAIN
