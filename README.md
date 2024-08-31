@@ -5,6 +5,14 @@
 
 ## Table of Contents
 - [Introduction](#introduction)
+- [Features](#features)
+- [Demo](#demo)
+- [Tech stack](#tech-stack)
+- [Installation](#installation)
+- [Usage](#usage)
+- [Configuration](#configuration)
+- [Credits](#credits)
+- [License](#license)
 
 ## Introduction
 
@@ -19,7 +27,7 @@ mmo-inventory is a RESTful MMO-style inventory API that makes it easy to create 
 [screenshots]
 
 
-## Demo link
+## Demo
 Coming soon
 
 ## Tech stack
