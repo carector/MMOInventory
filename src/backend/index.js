@@ -3,7 +3,7 @@ const express = require('express');
 const { Sequelize } = require('sequelize');
 const config = require('./config.json');
 const routes = require('./routes/index.route.js');
-const { db } = require('./fb.js');
+const { db, setupFirebase } = require('./fb.js');
 const bodyParser = require('body-parser');
 require('dotenv').config();
 
@@ -13,8 +13,9 @@ let app;
 
 async function init() {
 	// Verify DB connection
+	await setupFirebase();
 	if (!db) {
-		console.error(`Error initializing Firebase: ${err}`);
+		console.error("Firebase was not set up properly. Quitting...")
 		return;
 	}
 
