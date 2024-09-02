@@ -16,15 +16,15 @@
 
 ## Introduction
 
-mmo-inventory is a RESTful MMO-style inventory API that makes it easy to create users and manage items in your game project. Powered by Google Firebase, the app comes bundled with a simple web frontend that allows developers to start configuring  their game items right out of the box.
+mmo-inventory is a RESTful MMO-style inventory API that makes it easy to manage user accounts and items in your game project. Powered by Google Firebase, the app comes bundled with a simple web frontend that allows developers to start configuring their game items right out of the box.
 
 ## Features
-- Create user and admin accounts 
 - Easy-to-integrate commonplace inventory features such as stacking, sorting, and equipping
+- Connect to your own Firebase project to retain total control of your item database
 - Easily view and manage all items in your database via a built-in frontend web tool
 - Mass-import items to your game's database just by uploading a single JSON file
 
-[screenshots]
+{screenshots}
 
 
 ## Demo
