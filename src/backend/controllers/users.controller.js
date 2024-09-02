@@ -11,6 +11,7 @@ const {
 const { userConverter, User } = require('../models/users.model.js');
 const { getDb } = require('../fb.js');
 const { FirebaseError } = require('firebase/app');
+const { inventoryItemConverter, InventoryItem } = require('../models/inventoryitem.model.js');
 
 // Request body validation rules
 const vr_createUser = [
@@ -89,6 +90,9 @@ const addItemToInventory = (req, res) => {
 	// Append to inventory
 	//  - Will inventory field be necessary? Can just get all inventory items with userID
 	//  - Firebase isn't relational? Research further
+
+	const invItem = new InventoryItem(req.body);
+
 };
 
 const removeItemFromInventory = (req, res) => {
