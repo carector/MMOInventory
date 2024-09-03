@@ -15,3 +15,7 @@ body:json {
     "name": "Test user"
   }
 }
+
+script:post-response {
+  bru.setVar("userId", res.body.itemId);
+}

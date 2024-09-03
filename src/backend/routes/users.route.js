@@ -4,18 +4,11 @@ const { validationResult } = require('express-validator');
 
 // Local imports
 const usersController = require('../controllers/users.controller.js');
+const itemsController = require('../controllers/items.controller.js');
+const { checkValidation } = require('../common.js');
 
 // Definitions
 const router = express.Router();
-
-const checkValidation = (req, res, next) => {
-	const errors = validationResult(req);
-	if (!errors.isEmpty()) {
-		return res.status(400).json({ errors: errors.mapped() });
-	} else {
-		next();
-	}
-};
 
 // Routes
 router.route('/health').get((req, res) => res.send('User database'));
@@ -32,5 +25,17 @@ router.route('/').post(
 	],
 	usersController.createUser
 );
+
+router.route('/:userID/inv/').get();
+router.route('/:userID/inv/:index').get();
+
+router.route('/:userID/inv/').post(
+	[
+		// Todo: Authenticate
+		itemsController.mw_verifyItemExists,
+	],
+	usersController.addItemToInventory
+);
+router.route('/:userID/inv/').delete();
 
 module.exports = router;

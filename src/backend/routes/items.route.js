@@ -1,9 +1,10 @@
 // Imports
 const express = require('express');
-const { checkValidation } = require('../common.js');
 
 // Local imports
 const itemsController = require('../controllers/items.controller.js');
+const { checkValidation } = require('../common.js');
+
 
 // Definitions
 const router = express.Router();

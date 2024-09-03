@@ -9,9 +9,12 @@ const {
 	addDoc,
 } = require('firebase/firestore');
 const { userConverter, User } = require('../models/users.model.js');
+const {
+	inventoryItemConverter,
+	InventoryItem,
+} = require('../models/inventoryitem.model.js');
 const { getDb } = require('../fb.js');
 const { FirebaseError } = require('firebase/app');
-const { inventoryItemConverter, InventoryItem } = require('../models/inventoryitem.model.js');
 
 // Request body validation rules
 const vr_createUser = [
@@ -26,6 +29,9 @@ const vr_getUserByID = [
 const vr_addItemToInventory = [];
 const vr_removeItemFromInventory = [];
 const vr_equipItem = [];
+
+// Middleware functions
+const mw_authenticateUser = async function (req, res, next) {};
 
 // Route endpoints
 const createUser = async function (req, res) {
@@ -59,7 +65,9 @@ const getUserByID = async function (req, res) {
 		} else
 			return res
 				.status(404)
-				.send({message: `User with ID ${req.params.userID} not found`});
+				.send({
+					message: `User with ID ${req.params.userID} not found`,
+				});
 	} catch (e) {
 		console.error(e);
 		return res.status(400).send(`Error: ${e}`);
@@ -81,18 +89,15 @@ const getAllUsers = async function (req, res) {
 	}
 };
 
+// prereq: item exists
 const addItemToInventory = (req, res) => {
-	
-	res.send('TODO');
-
-	// Req contents: Item ID
-	// Create InventoryItem
-	// Append to inventory
-	//  - Will inventory field be necessary? Can just get all inventory items with userID
-	//  - Firebase isn't relational? Research further
+	// Req fields
+	// - quantity (if missing, 1)
+	// - param: item ID (check if item is valid during middleware step?)
 
 	const invItem = new InventoryItem(req.body);
-
+	console.log(inventoryItemConverter.toFirestore(invItem));
+	res.send('TODO');
 };
 
 const removeItemFromInventory = (req, res) => {
@@ -112,7 +117,9 @@ const equipItem = (req, res) => {
 module.exports = {
 	vr_createUser,
 	vr_getUserByID,
+
 	createUser,
 	getUserByID,
 	getAllUsers,
+	addItemToInventory,
 };

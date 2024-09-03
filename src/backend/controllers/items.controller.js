@@ -49,6 +49,24 @@ const vr_deleteItemByID = [
 	param('itemID').exists().notEmpty().withMessage('Item ID required'),
 ];
 
+// Middleware functions
+const mw_verifyItemExists = async function(req, res, next) {
+	const db = getDb()
+	try {
+		const itemCatalogRef = await collection(db, 'itemCatalog');
+		const result = await getDoc(doc(itemCatalogRef, req.params.itemID));
+		if (result.exists()) {
+			next();
+		} else
+			return res.status(404).send({
+				error: `Item with ID ${req.params.itemID} not found`,
+			});
+	} catch (e) {
+		console.error(e);
+		return res.status(400).send(`Error: ${e}`);
+	}
+}
+
 // Route endpoints
 const getItemByID = async function (req, res) {
 	const db = getDb()
@@ -151,6 +169,8 @@ module.exports = {
 	vr_createItem,
 	vr_enableDisableItemGlobally,
 	vr_deleteItemByID,
+
+	mw_verifyItemExists,
 
 	getItemByID,
 	getAllItems,
