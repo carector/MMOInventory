@@ -1,0 +1,11 @@
+meta {
+  name: Get inventory contents
+  type: http
+  seq: 6
+}
+
+get {
+  url: http://localhost:3030/users/{{userId}}/inv/
+  body: none
+  auth: none
+}

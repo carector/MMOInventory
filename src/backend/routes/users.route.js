@@ -26,9 +26,13 @@ router.route('/').post(
 	usersController.createUser
 );
 
-router.route('/:userID/inv/').get();
+// Get all inventory items
+router.route('/:userID/inv/').get([], usersController.getInventoryContents);
+
+// Get inventory item by index
 router.route('/:userID/inv/:index').get();
 
+// Add item to inventory
 router.route('/:userID/inv/:itemID').post(
 	[
 		// Todo: Authenticate
@@ -37,6 +41,11 @@ router.route('/:userID/inv/:itemID').post(
 	],
 	usersController.addItemToInventory
 );
-router.route('/:userID/inv/').delete();
+
+// Delete inventory item by index
+router.route('/:userID/inv/:index').delete([
+	// Todo: Authenticate
+	//usersController.mw_sanitizeUser,
+]);
 
 module.exports = router;

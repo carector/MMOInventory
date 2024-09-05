@@ -9,6 +9,11 @@ const {
 	addDoc,
 	updateDoc,
 	arrayUnion,
+	deleteDoc,
+	arrayRemove,
+	query,
+	where,
+	documentId,
 } = require('firebase/firestore');
 const { userConverter, User } = require('../models/users.model.js');
 const {
@@ -34,6 +39,7 @@ const vr_equipItem = [];
 
 // Middleware functions
 const mw_authenticateUser = async function (req, res, next) {};
+const mw_getInvItemIdFromIndex = async function (req, res, next) {};
 const mw_sanitizeUser = async function (req, res, next) {
 	const db = getDb();
 	try {
@@ -111,6 +117,36 @@ const getAllUsers = async function (req, res) {
 	}
 };
 
+const getInventoryContents = async function (req, res) {
+	const db = getDb();
+	try {
+		// Get user
+		const usersRef = await collection(db, 'users');
+		const result = await getDoc(doc(usersRef, req.params.userID));
+		if (!result.exists()) {
+			return res.status(404).send({
+				message: `User with ID ${req.params.userID} not found`,
+			});
+		}
+		console.log(result.data().inventory);
+		// Get each inventory item
+		let items = [];
+		const q = query(
+			collection(db, 'inventoryItems'),
+			where(documentId(), 'in', result.data().inventory)
+		);
+		const querySnapshot = await getDocs(q);
+		querySnapshot.forEach((doc) => {
+			items.push(doc);
+			console.log(doc.id);
+		});
+		return res.status(200).send(items);
+	} catch (e) {
+		console.error(e);
+		return res.status(400).send(`Error: ${e}`);
+	}
+};
+
 // prereq: item exists
 const addItemToInventory = async function (req, res) {
 	const db = getDb();
@@ -143,11 +179,27 @@ const addItemToInventory = async function (req, res) {
 	}
 };
 
-const removeItemFromInventory = (req, res) => {
-	res.send('TODO');
+const removeItemFromInventory = async function (req, res) {
+	const db = getDb();
+	try {
+		// Remove reference from inventory
+		const invItemId = req.body.invItemID;
+		const docRef = doc(collection(db, 'users'), req.params.userID);
+		const querySnapshot = await updateDoc(docRef, {
+			inventory: arrayRemove(invItemId),
+		});
 
-	// Req contents: InventoryItem ID (or item ID?)
-	// Find and delete InventoryItem with matching ID
+		// Delete inventory item
+		const ref = collection(db, 'inventoryItems');
+		const result = await deleteDoc(ref, item);
+
+		return res.status(200).send({
+			message: 'Successfully removed item from inventory.',
+		});
+	} catch (e) {
+		console.error(e);
+		return res.status(400).send(`Error: ${e}`);
+	}
 };
 
 const equipItem = (req, res) => {
@@ -167,4 +219,5 @@ module.exports = {
 	getUserByID,
 	getAllUsers,
 	addItemToInventory,
+	getInventoryContents,
 };
