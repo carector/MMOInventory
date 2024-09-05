@@ -29,8 +29,15 @@ router.route('/').post(
 // Get all inventory items
 router.route('/:userID/inv/').get([], usersController.getInventoryContents);
 
-// Get inventory item by index
-router.route('/:userID/inv/:index').get();
+// TODO: Make ID capitalization consistent (use Id everywhere instead of ID)
+
+// Get inventory item by ID
+router
+	.route('/:userID/inv/:invItemID')
+	.get(
+		[usersController.mw_verifyInventoryItemExists],
+		usersController.getInventoryItemById
+	);
 
 // Add item to inventory
 router.route('/:userID/inv/:itemID').post(
@@ -42,10 +49,14 @@ router.route('/:userID/inv/:itemID').post(
 	usersController.addItemToInventory
 );
 
-// Delete inventory item by index
-router.route('/:userID/inv/:index').delete([
-	// Todo: Authenticate
-	//usersController.mw_sanitizeUser,
-]);
+// Delete inventory item by ID
+router.route('/:userID/inv/:invItemID').delete(
+	[
+		// Todo: Authenticate
+		// Make sure inventory item is present in user's inventory
+		usersController.mw_verifyInventoryItemExists,
+	],
+	usersController.removeItemFromInventory
+);
 
 module.exports = router;

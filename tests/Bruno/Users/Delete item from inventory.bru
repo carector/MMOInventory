@@ -1,0 +1,11 @@
+meta {
+  name: Delete item from inventory
+  type: http
+  seq: 9
+}
+
+delete {
+  url: http://localhost:3030/users/{{userId}}/inv/{{invItemId}}
+  body: none
+  auth: none
+}

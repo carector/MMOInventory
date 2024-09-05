@@ -39,7 +39,30 @@ const vr_equipItem = [];
 
 // Middleware functions
 const mw_authenticateUser = async function (req, res, next) {};
-const mw_getInvItemIdFromIndex = async function (req, res, next) {};
+const mw_getInventoryItemIdFromIndex = async function (req, res, next) {};
+const mw_verifyInventoryItemExists = async function (req, res, next) {
+	const db = getDb();
+	const userId = req.params.userID;
+	try {
+		const itemCatalogRef = await collection(db, 'inventoryItems');
+		const result = await getDoc(doc(itemCatalogRef, req.params.invItemID));
+		if (result.exists()) {
+			// Make sure current user owns this item
+			if (result.data().ownerId !== userId)
+				return res.status(401).send({
+					error: `Inventory item with ID ${req.params.invItemID} not owned by user with ID ${userId}`,
+				});
+			next();
+		} else
+			return res.status(404).send({
+				error: `Inventory item with ID ${req.params.invItemID} not found`,
+			});
+	} catch (e) {
+		console.error(e);
+		return res.status(400).send(`Error: ${e}`);
+	}
+};
+
 const mw_sanitizeUser = async function (req, res, next) {
 	const db = getDb();
 	try {
@@ -49,7 +72,7 @@ const mw_sanitizeUser = async function (req, res, next) {
 		const result = await getDoc(docRef);
 		if (!result.exists()) {
 			return res.status(404).send({
-				message: `User with ID ${req.params.userID} not found`,
+				error: `User with ID ${req.params.userID} not found`,
 			});
 		}
 
@@ -94,7 +117,7 @@ const getUserByID = async function (req, res) {
 			return res.status(200).send(result.data());
 		} else
 			return res.status(404).send({
-				message: `User with ID ${req.params.userID} not found`,
+				error: `User with ID ${req.params.userID} not found`,
 			});
 	} catch (e) {
 		console.error(e);
@@ -125,7 +148,7 @@ const getInventoryContents = async function (req, res) {
 		const result = await getDoc(doc(usersRef, req.params.userID));
 		if (!result.exists()) {
 			return res.status(404).send({
-				message: `User with ID ${req.params.userID} not found`,
+				error: `User with ID ${req.params.userID} not found`,
 			});
 		}
 		console.log(result.data().inventory);
@@ -147,6 +170,24 @@ const getInventoryContents = async function (req, res) {
 	}
 };
 
+const getInventoryItemById = async function (req, res) {
+	const db = getDb();
+	try {
+		// Get user from firestore
+		const itemsRef = await collection(db, 'inventoryItems');
+		const result = await getDoc(doc(itemsRef, req.params.invItemID));
+		if (result.exists()) {
+			return res.status(200).send(result.data());
+		} else
+			return res.status(404).send({
+				error: `Inventory item with ID ${req.params.invItemID} not found`,
+			});
+	} catch (e) {
+		console.error(e);
+		return res.status(400).send(`Error: ${e}`);
+	}
+};
+
 // prereq: item exists
 const addItemToInventory = async function (req, res) {
 	const db = getDb();
@@ -154,6 +195,7 @@ const addItemToInventory = async function (req, res) {
 		// Create inventoryItem
 		const data = {
 			itemPath: `itemCatalog/${req.params.itemID}`,
+			ownerId: req.params.userID,
 			quantity: req.body.quantity,
 		};
 		const item = inventoryItemConverter.toFirestore(
@@ -183,7 +225,7 @@ const removeItemFromInventory = async function (req, res) {
 	const db = getDb();
 	try {
 		// Remove reference from inventory
-		const invItemId = req.body.invItemID;
+		const invItemId = req.params.invItemID;
 		const docRef = doc(collection(db, 'users'), req.params.userID);
 		const querySnapshot = await updateDoc(docRef, {
 			inventory: arrayRemove(invItemId),
@@ -191,10 +233,9 @@ const removeItemFromInventory = async function (req, res) {
 
 		// Delete inventory item
 		const ref = collection(db, 'inventoryItems');
-		const result = await deleteDoc(ref, item);
-
+		const result = await deleteDoc(doc(ref, invItemId));
 		return res.status(200).send({
-			message: 'Successfully removed item from inventory.',
+			message: `Item with ID ${invItemId} deleted successfully`,
 		});
 	} catch (e) {
 		console.error(e);
@@ -214,10 +255,14 @@ module.exports = {
 	vr_getUserByID,
 
 	mw_sanitizeUser,
+	mw_verifyInventoryItemExists,
 
 	createUser,
 	getUserByID,
 	getAllUsers,
+
 	addItemToInventory,
 	getInventoryContents,
+	getInventoryItemById,
+	removeItemFromInventory,
 };
