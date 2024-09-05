@@ -1,7 +1,8 @@
 // Model
 class User {
 	constructor(data) {
-		this.name = data.name;
+		this.name = data.name || 'New User';
+		this.inventory = data.inventory || [];
 	} 
 }
 
@@ -10,6 +11,7 @@ const userConverter = {
 	toFirestore: (user) => {
 		return {
 			name: user.name,
+			inventory: user.inventory
 		};
 	},
 	fromFirestore: (snapshot, options) => {

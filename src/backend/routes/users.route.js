@@ -29,10 +29,11 @@ router.route('/').post(
 router.route('/:userID/inv/').get();
 router.route('/:userID/inv/:index').get();
 
-router.route('/:userID/inv/').post(
+router.route('/:userID/inv/:itemID').post(
 	[
 		// Todo: Authenticate
 		itemsController.mw_verifyItemExists,
+		//usersController.mw_sanitizeUser,
 	],
 	usersController.addItemToInventory
 );

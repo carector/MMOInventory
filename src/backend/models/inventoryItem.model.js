@@ -4,7 +4,7 @@ class InventoryItem {
 		this.itemPath = data.itemPath;
 		this.equipped = data?.equipped || false;
 		this.quantity = data?.quantity || 1;
-		this.dateObtained = data?.dateObtained;
+		this.dateObtained = data?.dateObtained || new Date();
 	}
 }
 

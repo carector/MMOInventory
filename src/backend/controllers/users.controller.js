@@ -7,12 +7,14 @@ const {
 	getDocs,
 	collection,
 	addDoc,
+	updateDoc,
+	arrayUnion,
 } = require('firebase/firestore');
 const { userConverter, User } = require('../models/users.model.js');
 const {
 	inventoryItemConverter,
 	InventoryItem,
-} = require('../models/inventoryitem.model.js');
+} = require('../models/inventoryItem.model.js');
 const { getDb } = require('../fb.js');
 const { FirebaseError } = require('firebase/app');
 
@@ -32,16 +34,38 @@ const vr_equipItem = [];
 
 // Middleware functions
 const mw_authenticateUser = async function (req, res, next) {};
+const mw_sanitizeUser = async function (req, res, next) {
+	const db = getDb();
+	try {
+		// Get user from firestore
+		const usersRef = await collection(db, 'users');
+		const docRef = await doc(usersRef, req.params.userID);
+		const result = await getDoc(docRef);
+		if (!result.exists()) {
+			return res.status(404).send({
+				message: `User with ID ${req.params.userID} not found`,
+			});
+		}
+
+		// Add any missing fields and delete any that shouldn't be there
+		const sanitizedUser = userConverter.toFirestore(
+			new User(result.data())
+		);
+		//await updateDoc(docRef, sanitizedUser);
+		next();
+	} catch (e) {
+		console.error(e);
+		return res.status(400).send(`Error: ${e}`);
+	}
+};
 
 // Route endpoints
 const createUser = async function (req, res) {
-	console.log('- TEST ADD - ');
 	const db = getDb();
 	try {
 		// Req contents: name
 		const ref = collection(db, 'users');
 		const u = userConverter.toFirestore(new User(req.body));
-		console.log(u);
 		const result = await addDoc(ref, u);
 		return res.status(200).send({
 			message: 'Successfully created user.',
@@ -63,11 +87,9 @@ const getUserByID = async function (req, res) {
 		if (result.exists()) {
 			return res.status(200).send(result.data());
 		} else
-			return res
-				.status(404)
-				.send({
-					message: `User with ID ${req.params.userID} not found`,
-				});
+			return res.status(404).send({
+				message: `User with ID ${req.params.userID} not found`,
+			});
 	} catch (e) {
 		console.error(e);
 		return res.status(400).send(`Error: ${e}`);
@@ -90,14 +112,35 @@ const getAllUsers = async function (req, res) {
 };
 
 // prereq: item exists
-const addItemToInventory = (req, res) => {
-	// Req fields
-	// - quantity (if missing, 1)
-	// - param: item ID (check if item is valid during middleware step?)
+const addItemToInventory = async function (req, res) {
+	const db = getDb();
+	try {
+		// Create inventoryItem
+		const data = {
+			itemPath: `itemCatalog/${req.params.itemID}`,
+			quantity: req.body.quantity,
+		};
+		const item = inventoryItemConverter.toFirestore(
+			new InventoryItem(data)
+		);
+		const ref = collection(db, 'inventoryItems');
+		const result = await addDoc(ref, item);
 
-	const invItem = new InventoryItem(req.body);
-	console.log(inventoryItemConverter.toFirestore(invItem));
-	res.send('TODO');
+		// Update inventory
+		const docRef = doc(collection(db, 'users'), req.params.userID);
+		const querySnapshot = await updateDoc(docRef, {
+			inventory: arrayUnion(result.id),
+		});
+
+		return res.status(200).send({
+			message: 'Successfully added item to inventory.',
+			inventoryItemId: result.id,
+			inventoryItem: item,
+		});
+	} catch (e) {
+		console.error(e);
+		return res.status(400).send(`Error: ${e}`);
+	}
 };
 
 const removeItemFromInventory = (req, res) => {
@@ -117,6 +160,8 @@ const equipItem = (req, res) => {
 module.exports = {
 	vr_createUser,
 	vr_getUserByID,
+
+	mw_sanitizeUser,
 
 	createUser,
 	getUserByID,
