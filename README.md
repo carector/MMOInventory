@@ -2,6 +2,8 @@
 
 [todo: CI/CD pipeline badge]
 
+[![wakatime](https://wakatime.com/badge/user/59402cab-1799-4733-b30d-ec5d8ed0a7c9/project/507331dc-c304-455a-a102-b23f199fa487.svg)](https://wakatime.com/badge/user/59402cab-1799-4733-b30d-ec5d8ed0a7c9/project/507331dc-c304-455a-a102-b23f199fa487)
+
 
 ## Table of Contents
 - [Introduction](#introduction)
