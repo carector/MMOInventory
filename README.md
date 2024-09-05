@@ -44,7 +44,7 @@ Coming soon
 - Node version >= v20.8.1 and npm version >= 10.1.0 installed (probably works with older versions - untested)
 
 ### Installation steps
-1. Download the repository and install required packages with `npm init`.
+1. Download the repository and install required packages with `npm install`.
 2. At the project root, add the following fields to the empty `.env` environment file to allow the API to connect to your Firebase project:
 ```
 FIREBASE_API_KEY
