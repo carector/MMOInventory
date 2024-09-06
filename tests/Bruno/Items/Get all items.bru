@@ -1,0 +1,17 @@
+meta {
+  name: Get all items
+  type: http
+  seq: 2
+}
+
+get {
+  url: http://localhost:3030/itemCatalog/
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "includeDisabledItems": "true"
+  }
+}

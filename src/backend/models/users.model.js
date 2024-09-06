@@ -1,11 +1,8 @@
-// Imports
-const { doc, setDoc } = require('firebase/firestore');
-
 // Model
 class User {
 	constructor(data) {
 		this.name = data.name;
-	}
+	} 
 }
 
 // Firestore data converter

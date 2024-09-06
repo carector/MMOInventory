@@ -1,0 +1,11 @@
+meta {
+  name: Get item by ID
+  type: http
+  seq: 4
+}
+
+get {
+  url: http://localhost:3030/itemCatalog/{{itemId}}
+  body: none
+  auth: none
+}

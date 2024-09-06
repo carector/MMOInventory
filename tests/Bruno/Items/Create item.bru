@@ -1,0 +1,23 @@
+meta {
+  name: Create item
+  type: http
+  seq: 3
+}
+
+post {
+  url: http://localhost:3030/itemCatalog/
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "baseItemName": "Test item",
+    "description": "Tasty treat",
+    "stackable": true
+  }
+}
+
+script:post-response {
+  bru.setVar("itemId", res.body.itemId);
+}
