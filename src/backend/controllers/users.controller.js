@@ -144,26 +144,42 @@ const getInventoryContents = async function (req, res) {
 	const db = getDb();
 	try {
 		// Get user
-		const usersRef = await collection(db, 'users');
+		const usersRef = collection(db, 'users');
 		const result = await getDoc(doc(usersRef, req.params.userID));
 		if (!result.exists()) {
 			return res.status(404).send({
 				error: `User with ID ${req.params.userID} not found`,
 			});
 		}
-		console.log(result.data().inventory);
+
 		// Get each inventory item
+		let invItems = [];
 		let items = [];
-		const q = query(
+		const q1 = query(
 			collection(db, 'inventoryItems'),
 			where(documentId(), 'in', result.data().inventory)
 		);
-		const querySnapshot = await getDocs(q);
-		querySnapshot.forEach((doc) => {
-			items.push(doc);
-			console.log(doc.id);
+		const q1Snapshot = await getDocs(q1);
+		q1Snapshot.forEach((doc) => {
+			invItems.push({ documentId: doc.id, ...doc.data() });
+			items.push(doc.data().itemPath.split('/')[1]);
 		});
-		return res.status(200).send(items);
+
+		// Get item data for each inventory item
+		const q2 = query(
+			collection(db, 'itemCatalog'),
+			where(documentId(), 'in', items)
+		);
+		const q2Snapshot = await getDocs(q2);
+		q2Snapshot.forEach((doc) => {
+			invItems
+				.filter((i) => i.itemPath.includes(doc.id))
+				.forEach((invItem) => {
+					invItem.item = doc.data();
+				});
+		});
+
+		return res.status(200).send(invItems);
 	} catch (e) {
 		console.error(e);
 		return res.status(400).send(`Error: ${e}`);
@@ -173,11 +189,18 @@ const getInventoryContents = async function (req, res) {
 const getInventoryItemById = async function (req, res) {
 	const db = getDb();
 	try {
-		// Get user from firestore
+		// Get inv item from firestore
 		const itemsRef = await collection(db, 'inventoryItems');
 		const result = await getDoc(doc(itemsRef, req.params.invItemID));
 		if (result.exists()) {
-			return res.status(200).send(result.data());
+			// Get actual item data
+			const itemResult = await getDoc(doc(db, result.data().itemPath));
+			const ret = {
+				documentId: result.id,
+				...result.data(),
+				item: itemResult.data(),
+			};
+			return res.status(200).send(ret);
 		} else
 			return res.status(404).send({
 				error: `Inventory item with ID ${req.params.invItemID} not found`,

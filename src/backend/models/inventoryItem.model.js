@@ -1,4 +1,5 @@
 // Model
+// Metadata for an item that is placed in a user's inventory
 class InventoryItem {
 	constructor(data) {
 		this.itemPath = data.itemPath;								// Reference ID of the actual item
