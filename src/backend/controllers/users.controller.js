@@ -152,6 +152,10 @@ const getInventoryContents = async function (req, res) {
 			});
 		}
 
+		// Return early if inventory is empty
+		if(result.data().inventory.length === 0)
+			return res.status(200).send([]);
+
 		// Get each inventory item
 		let invItems = [];
 		let items = [];
