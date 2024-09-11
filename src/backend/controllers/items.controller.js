@@ -2,13 +2,13 @@
 const { check, param, body } = require('express-validator');
 const {
 	doc,
-	setDoc,
 	getDoc,
 	getDocs,
 	deleteDoc,
 	updateDoc,
 	collection,
 	addDoc,
+	writeBatch
 } = require('firebase/firestore');
 
 const { getDb } = require('../fb.js');
@@ -59,6 +59,10 @@ const vr_createItem = [
 		.optional()
 		.isBoolean()
 		.withMessage('Stackable must either be true or false'),
+	check('goldValue')
+		.optional()
+		.isInt()
+		.withMessage('Gold value must be an integer number')
 ];
 
 const vr_enableDisableItemGlobally = [
@@ -73,6 +77,10 @@ const vr_enableDisableItemGlobally = [
 const vr_deleteItemByID = [
 	param('itemID').exists().notEmpty().withMessage('Item ID required'),
 ];
+
+// Middleware
+// sanitize item further? (done already by item class constructor)
+// 
 
 // Route endpoints
 const getItemByID = async function (req, res) {
@@ -117,7 +125,7 @@ const createItem = async function (req, res) {
 		const ref = collection(db, 'itemCatalog');
 		console.log(req.body);
 		const u = itemConverter.toFirestore(convertToSubclass(req.body));
-		const result = await addDoc(ref, u);
+		const result = await addDoc(ref, u);	
 		return res.status(200).send({
 			message: 'Successfully created item.',
 			itemId: result.id,
@@ -172,6 +180,30 @@ const importItemsFromJSON = async function (req, res) {
 	// Validate json array of items
 	// - Return errors if present
 	// Create items in DB for each item in JSON
+
+	const db = getDb();
+	try {
+		const items = req.body.items;
+		const batch = writeBatch(db);
+		const ref = collection(db, 'itemCatalog');
+
+		items.forEach((item) => {
+			const u = itemConverter.toFirestore(convertToSubclass(item));
+			// Need to generate doc ID - 'set' doesn't create one
+			console.log(u);
+			batch.set(ref, u);
+		})
+
+		const result = await batch.commit();
+		console.log("Committed?");
+		return res.status(200).send({
+			message: 'Successfully created items.',
+			items: result.data()
+		});
+	} catch (e) {
+		console.error(e);
+		return res.status(400).send(`Error: ${e}`);
+	}
 };
 
 module.exports = {

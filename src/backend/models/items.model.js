@@ -2,13 +2,14 @@
 class Item {
 	constructor(data) {
 		this.baseItemName = data.baseItemName;
-		this.description = data?.description || 'No description provided.';
-		(this.itemType = data?.itemType || 'Consumable'),
+		this.description = data.description || 'No description provided.';
+		(this.itemType = data.itemType || 'Consumable'),
 			(this.stackable =
-				data?.stackable || this.type === 'Consumable' || false);
-		this.thumbnailURL = data?.thumbnailURL || '';
-		this.disabledGlobally = data?.disabledGlobally || false;
-		this.adminPrivRequired = data?.adminPrivRequired || false; // Whether admin privileges are required to view this item or not
+				data.stackable || this.type === 'Consumable' || false);
+		this.thumbnailURL = data.thumbnailURL || '';
+		this.disabledGlobally = data.disabledGlobally || false;
+		this.adminPrivRequired = data.adminPrivRequired || false; // Whether admin privileges are required to view this item or not
+		this.goldValue = data.goldValue || 0;
 	}
 
 	getExtraFields() {
@@ -16,7 +17,8 @@ class Item {
 	}
 }
 
-// TODO: Consider switching to typescript for models for simplicity
+// TODO: Switch to typescript for models for simplicity
+// Consider this a first pass to get basic functionality in place
 
 class ItemType {
 	static Equipment = new ItemType('Equipment');
@@ -85,6 +87,7 @@ const itemConverter = {
 			stackable: item.stackable,
 			thumbnailURL: item.thumbnailURL,
 			disabledGlobally: item.disabledGlobally,
+			goldValue: item.goldValue,
 			...item.getExtraFields()
 		};
 	},
