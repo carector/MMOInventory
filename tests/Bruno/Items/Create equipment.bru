@@ -1,0 +1,25 @@
+meta {
+  name: Create equipment
+  type: http
+  seq: 4
+}
+
+post {
+  url: http://localhost:3030/itemCatalog/
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "baseItemName": "Iron chestplate",
+    "description": "A big, hulking slab of steel to protect your important bits",
+    "itemType": "Equipment",
+    "equipmentType": "Chest",
+    "stackable": true
+  }
+}
+
+script:post-response {
+  bru.setVar("itemId", res.body.itemId);
+}
