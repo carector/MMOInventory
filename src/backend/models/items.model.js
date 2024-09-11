@@ -85,7 +85,7 @@ const itemConverter = {
 			stackable: item.stackable,
 			thumbnailURL: item.thumbnailURL,
 			disabledGlobally: item.disabledGlobally,
-			...item.extraFields()
+			...item.getExtraFields()
 		};
 	},
 	fromFirestore: (snapshot, options) => {
