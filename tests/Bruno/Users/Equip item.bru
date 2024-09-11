@@ -1,0 +1,17 @@
+meta {
+  name: Equip item
+  type: http
+  seq: 9
+}
+
+post {
+  url: http://localhost:3030/users/{{userId}}/inv/equip/{{invItemId}}
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "slot": "Chest"
+  }
+}

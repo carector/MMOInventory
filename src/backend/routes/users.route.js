@@ -13,7 +13,15 @@ const router = express.Router();
 // Routes
 router.route('/health').get((req, res) => res.send('User database'));
 router.route('/').get(usersController.getAllUsers);
-router.route('/:userID').get(usersController.getUserByID);
+router.route('/:userID').get(
+	[
+		usersController.mw_getUserByID
+	], 
+	(req, res, next) => {
+		return res.status(200).send(req.body.userResult);
+	}
+);
+
 router.route('/').post(
 	[
 		(req, res, next) => {
@@ -43,8 +51,7 @@ router
 router.route('/:userID/inv/:itemID').post(
 	[
 		// Todo: Authenticate
-		itemsController.mw_verifyItemExists,
-		//usersController.mw_sanitizeUser,
+		//itemsController.mw_verifyItemExists
 	],
 	usersController.addItemToInventory
 );
@@ -58,5 +65,26 @@ router.route('/:userID/inv/:invItemID').delete(
 	],
 	usersController.removeItemFromInventory
 );
+
+// Get equipped items
+//router.route('/:userID/inv/equipped').get([usersController.mw_sanitizeUser]);
+router.route('/:userID/inv/equip/:invItemID').post(
+	[
+		usersController.mw_verifyInventoryItemExists,
+		usersController.mw_getUserByID
+	], 
+	usersController.equipItem
+);
+
+router.route('/:userID/inv/unequip/:slot').post(
+	[
+		usersController.mw_getUserByID
+	], 
+	usersController.unequipItem
+);
+//router.route('/:userID/inv/buyItem').post([], usersController.unequipItem);
+
+
+
 
 module.exports = router;

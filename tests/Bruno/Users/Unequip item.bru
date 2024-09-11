@@ -1,0 +1,11 @@
+meta {
+  name: Unequip item
+  type: http
+  seq: 10
+}
+
+post {
+  url: http://localhost:3030/users/{{userId}}/inv/unequip/Chest
+  body: json
+  auth: none
+}

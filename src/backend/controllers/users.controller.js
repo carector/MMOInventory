@@ -63,6 +63,27 @@ const mw_verifyInventoryItemExists = async function (req, res, next) {
 	}
 };
 
+const mw_getUserByID = async function (req, res, next) {
+	const db = getDb();
+	try {
+		// Get user from firestore
+		const usersRef = await collection(db, 'users');
+		const result = await getDoc(doc(usersRef, req.params.userID));
+		if (result.exists()) {
+			// Add to req body in case we need to get user as part of middleware
+			req.body.userResult = result.data();
+			return next();
+			//return res.status(200).send(result.data());
+		} else
+			return res.status(404).send({
+				error: `User with ID ${req.params.userID} not found`,
+			});
+	} catch (e) {
+		console.error(e);
+		return res.status(400).send(`Error: ${e}`);
+	}
+};
+
 const mw_sanitizeUser = async function (req, res, next) {
 	const db = getDb();
 	try {
@@ -107,23 +128,7 @@ const createUser = async function (req, res) {
 	}
 };
 
-const getUserByID = async function (req, res) {
-	const db = getDb();
-	try {
-		// Get user from firestore
-		const usersRef = await collection(db, 'users');
-		const result = await getDoc(doc(usersRef, req.params.userID));
-		if (result.exists()) {
-			return res.status(200).send(result.data());
-		} else
-			return res.status(404).send({
-				error: `User with ID ${req.params.userID} not found`,
-			});
-	} catch (e) {
-		console.error(e);
-		return res.status(400).send(`Error: ${e}`);
-	}
-};
+// TODO: Consider moving all .send calls to routes to increase reusability of fcns?
 
 const getAllUsers = async function (req, res) {
 	const db = getDb();
@@ -252,6 +257,7 @@ const removeItemFromInventory = async function (req, res) {
 	const db = getDb();
 	try {
 		// Remove reference from inventory
+		// TODO: Remove from equipped items if equipped
 		const invItemId = req.params.invItemID;
 		const docRef = doc(collection(db, 'users'), req.params.userID);
 		const querySnapshot = await updateDoc(docRef, {
@@ -270,12 +276,69 @@ const removeItemFromInventory = async function (req, res) {
 	}
 };
 
-const equipItem = (req, res) => {
-	res.send('TODO');
-
+const equipItem = async function (req, res) {
 	// Req contents: InventoryItem ID
-	//
+	// prereq: confirm item is an equipment
+	const db = getDb();
+	try {
+		let slots = req.body.userResult.equippedItems;
+		slots[req.body.slot] = req.params.invItemID;
+		
+		const docRef = doc(collection(db, 'users'), req.params.userID);
+		const querySnapshot = await updateDoc(docRef, {
+			equippedItems: slots
+		});
+
+		return res.status(200).send({
+			message: `Equipped ${req.params.invItemID} to ${req.body.slot}`,
+		});
+	} catch (e) {
+		console.error(e);
+		return res.status(400).send(`Error: ${e}`);
+	}
+
 };
+
+const getEquippedItems = async function(req, res) {
+	// Stored as array of invitem IDs
+	res.send('TODO');
+	
+};
+
+
+const unequipItem = async function(req, res) {
+	// Takes item slot as only input
+	const db = getDb();
+	try {
+		// Remove
+		let slots = req.body.userResult.equippedItems;
+		const equipped = slots[req.params.slot];
+		if(equipped === '')
+			return res.status(200).send({
+				message: `No item equipped to ${req.params.slot}`,
+			});
+
+		slots[req.params.slot] = '';
+		
+		const docRef = doc(collection(db, 'users'), req.params.userID);
+		const querySnapshot = await updateDoc(docRef, {
+			equippedItems: slots
+		});
+
+		return res.status(200).send({
+			message: `Unequipped ${req.params.slot}`,
+		});
+	} catch (e) {
+		console.error(e);
+		return res.status(400).send(`Error: ${e}`);
+	}
+}
+
+const increaseGold = async function(req, res) {
+
+}
+const decreaseGold = async function(req, res) {}
+
 
 module.exports = {
 	vr_createUser,
@@ -283,13 +346,18 @@ module.exports = {
 
 	mw_sanitizeUser,
 	mw_verifyInventoryItemExists,
+	mw_getUserByID,
 
 	createUser,
-	getUserByID,
 	getAllUsers,
 
 	addItemToInventory,
 	getInventoryContents,
 	getInventoryItemById,
 	removeItemFromInventory,
+	equipItem,
+	getEquippedItems,
+	unequipItem,
+	increaseGold,
+	decreaseGold
 };

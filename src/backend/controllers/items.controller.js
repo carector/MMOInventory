@@ -212,7 +212,7 @@ module.exports = {
 	vr_enableDisableItemGlobally,
 	vr_deleteItemByID,
 
-	mw_verifyItemExists,
+	
 
 	getItemByID,
 	getAllItems,
