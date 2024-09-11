@@ -1,0 +1,48 @@
+meta {
+  name: Create multiple items
+  type: http
+  seq: 5
+}
+
+post {
+  url: http://localhost:3030/itemCatalog/import
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "items": [
+      {
+        "baseItemName": "Iron chestplate",
+        "description": "A big, hulking slab of steel to protect your important bits",
+        "itemType": "Equipment",
+        "equipmentType": "Chest",
+        "stackable": true
+      },
+      {
+        "baseItemName": "Brick",
+        "description": "Smash em",
+        "itemType": "Equipment",
+        "equipmentType": "LeftHand",
+        "stackable": false
+      },
+      {
+        "baseItemName": "Crapberry",
+        "description": "A berry from a crapberry bush",
+        "itemType": "Consumable",
+        "stackable": true
+      },
+      {
+        "baseItemName": "Dirt sandwich",
+        "description": "High in nutrients and worms",
+        "itemType": "Consumable",
+        "stackable": true
+      }
+    ]
+  }
+}
+
+script:post-response {
+  bru.setVar("itemId", res.body.itemId);
+}

@@ -1,5 +1,5 @@
 meta {
-  name: Create item
+  name: Create consumable item
   type: http
   seq: 3
 }
@@ -12,9 +12,10 @@ post {
 
 body:json {
   {
-    "baseItemName": "Test item",
+    "baseItemName": "Ice cream sammy",
     "description": "Tasty treat",
-    "stackable": true
+    "stackable": true,
+    "itemType": "Consumable"
   }
 }
 

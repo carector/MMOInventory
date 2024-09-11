@@ -27,6 +27,13 @@ router
 	);
 
 router
+	.route('/import')
+	.post(
+		[],
+		itemsController.importItemsFromJSON
+	);
+
+router
 	.route('/updateDisabledState/:itemID')
 	.patch(
 		[itemsController.vr_enableDisableItemGlobally, checkValidation],
