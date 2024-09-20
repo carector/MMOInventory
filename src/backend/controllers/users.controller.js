@@ -1,4 +1,4 @@
-// Imports
+// #region Imports
 const { check, param } = require('express-validator');
 const {
 	doc,
@@ -22,40 +22,44 @@ const {
 } = require('../models/inventoryItem.model.js');
 const { getDb } = require('../fb.js');
 const { FirebaseError } = require('firebase/app');
+// #endregion
 
-// Request body validation rules
+// #region Validation rules
+// TODO: Move validation rules to route file
 const vr_createUser = [
 	check('name')
 		.notEmpty()
 		.withMessage('User name required')
 		.isLength({ max: 40 }),
 ];
-const vr_getUserByID = [
-	param('userID').exists().notEmpty().withMessage('User ID required'),
+
+const vr_getUserById = [
+	param('userId').exists().notEmpty().withMessage('User ID required'),
 ];
 const vr_addItemToInventory = [];
 const vr_removeItemFromInventory = [];
 const vr_equipItem = [];
+// #endregion
 
-// Middleware functions
-const mw_authenticateUser = async function (req, res, next) {};
-const mw_getInventoryItemIdFromIndex = async function (req, res, next) {};
-const mw_verifyInventoryItemExists = async function (req, res, next) {
+
+// #region Middleware functions
+const getInventoryItemIdFromIndex = async function (req, res, next) {};
+const verifyInventoryItemExists = async function (req, res, next) {
 	const db = getDb();
-	const userId = req.params.userID;
+	const userId = req.params.userId;
 	try {
 		const itemCatalogRef = await collection(db, 'inventoryItems');
-		const result = await getDoc(doc(itemCatalogRef, req.params.invItemID));
+		const result = await getDoc(doc(itemCatalogRef, req.params.invItemId)); // TODO: Near-identical to getInventoryItem, consolidate into one fcn
 		if (result.exists()) {
 			// Make sure current user owns this item
 			if (result.data().ownerId !== userId)
 				return res.status(401).send({
-					error: `Inventory item with ID ${req.params.invItemID} not owned by user with ID ${userId}`,
+					error: `Inventory item with ID ${req.params.invItemId} not owned by user with ID ${userId}`,
 				});
 			next();
 		} else
 			return res.status(404).send({
-				error: `Inventory item with ID ${req.params.invItemID} not found`,
+				error: `Inventory item with ID ${req.params.invItemId} not found`,
 			});
 	} catch (e) {
 		console.error(e);
@@ -63,20 +67,18 @@ const mw_verifyInventoryItemExists = async function (req, res, next) {
 	}
 };
 
-const mw_getUserByID = async function (req, res, next) {
+const getUserById = async function (req, res, next) {
 	const db = getDb();
 	try {
 		// Get user from firestore
 		const usersRef = await collection(db, 'users');
-		const result = await getDoc(doc(usersRef, req.params.userID));
+		const result = await getDoc(doc(usersRef, req.params.userId));
 		if (result.exists()) {
-			// Add to req body in case we need to get user as part of middleware
-			req.body.userResult = result.data();
+			res.locals.userData = result.data();
 			return next();
-			//return res.status(200).send(result.data());
 		} else
 			return res.status(404).send({
-				error: `User with ID ${req.params.userID} not found`,
+				error: `User with ID ${req.params.userId} not found`,
 			});
 	} catch (e) {
 		console.error(e);
@@ -84,16 +86,16 @@ const mw_getUserByID = async function (req, res, next) {
 	}
 };
 
-const mw_sanitizeUser = async function (req, res, next) {
+const sanitizeUser = async function (req, res, next) {
 	const db = getDb();
 	try {
 		// Get user from firestore
 		const usersRef = await collection(db, 'users');
-		const docRef = await doc(usersRef, req.params.userID);
+		const docRef = await doc(usersRef, req.params.userId);
 		const result = await getDoc(docRef);
 		if (!result.exists()) {
 			return res.status(404).send({
-				error: `User with ID ${req.params.userID} not found`,
+				error: `User with ID ${req.params.userId} not found`,
 			});
 		}
 
@@ -109,28 +111,33 @@ const mw_sanitizeUser = async function (req, res, next) {
 	}
 };
 
-// Route endpoints
-const createUser = async function (req, res) {
+const hasEnoughGold = async function(req, res, next) {
+	const db = getDb();
+	if(!res.locals.userData) {
+		
+	}
+	else
+		return res.status(400).send(`Error: userData not present in response locals (are you missing a middleware call?)`);
+	next();
+}
+
+const createUser = async function (req, res, next) {
 	const db = getDb();
 	try {
 		// Req contents: name
 		const ref = collection(db, 'users');
 		const u = userConverter.toFirestore(new User(req.body));
 		const result = await addDoc(ref, u);
-		return res.status(200).send({
-			message: 'Successfully created user.',
-			userId: result.id,
-			user: u,
-		});
+		res.locals.userData = u;
+		res.locals.userId = result.id;
+		next();
 	} catch (e) {
 		console.error(e);
 		return res.status(400).send(`Error: ${e}`);
 	}
 };
 
-// TODO: Consider moving all .send calls to routes to increase reusability of fcns?
-
-const getAllUsers = async function (req, res) {
+const getAllUsers = async function (req, res, next) {
 	const db = getDb();
 	try {
 		const querySnapshot = await getDocs(collection(db, 'users'));
@@ -145,21 +152,23 @@ const getAllUsers = async function (req, res) {
 	}
 };
 
-const getInventoryContents = async function (req, res) {
+const getInventoryContents = async function (req, res, next) {
 	const db = getDb();
 	try {
 		// Get user
 		const usersRef = collection(db, 'users');
-		const result = await getDoc(doc(usersRef, req.params.userID));
+		const result = await getDoc(doc(usersRef, req.params.userId));
 		if (!result.exists()) {
 			return res.status(404).send({
-				error: `User with ID ${req.params.userID} not found`,
+				error: `User with ID ${req.params.userId} not found`,
 			});
 		}
 
 		// Return early if inventory is empty
-		if(result.data().inventory.length === 0)
-			return res.status(200).send([]);
+		if(result.data().inventory.length === 0) {
+			res.locals.inventory = [];
+			return next();
+		}
 
 		// Get each inventory item
 		let invItems = [];
@@ -187,20 +196,20 @@ const getInventoryContents = async function (req, res) {
 					invItem.item = doc.data();
 				});
 		});
-
-		return res.status(200).send(invItems);
+		res.locals.inventory = invItems;
+		next();
 	} catch (e) {
 		console.error(e);
 		return res.status(400).send(`Error: ${e}`);
 	}
 };
 
-const getInventoryItemById = async function (req, res) {
+const getInventoryItemById = async function (req, res, next) {
 	const db = getDb();
 	try {
 		// Get inv item from firestore
 		const itemsRef = await collection(db, 'inventoryItems');
-		const result = await getDoc(doc(itemsRef, req.params.invItemID));
+		const result = await getDoc(doc(itemsRef, req.params.invItemId));
 		if (result.exists()) {
 			// Get actual item data
 			const itemResult = await getDoc(doc(db, result.data().itemPath));
@@ -209,10 +218,11 @@ const getInventoryItemById = async function (req, res) {
 				...result.data(),
 				item: itemResult.data(),
 			};
-			return res.status(200).send(ret);
+			res.locals.invItemResult = ret;
+			next();
 		} else
 			return res.status(404).send({
-				error: `Inventory item with ID ${req.params.invItemID} not found`,
+				error: `Inventory item with Id ${req.params.invItemId} not found`,
 			});
 	} catch (e) {
 		console.error(e);
@@ -221,13 +231,13 @@ const getInventoryItemById = async function (req, res) {
 };
 
 // prereq: item exists
-const addItemToInventory = async function (req, res) {
+const addItemToInventory = async function (req, res, next) {
 	const db = getDb();
 	try {
 		// Create inventoryItem
 		const data = {
-			itemPath: `itemCatalog/${req.params.itemID}`,
-			ownerId: req.params.userID,
+			itemPath: `itemCatalog/${req.params.itemId}`,
+			ownerId: req.params.userId,
 			quantity: req.body.quantity,
 		};
 		const item = inventoryItemConverter.toFirestore(
@@ -237,29 +247,27 @@ const addItemToInventory = async function (req, res) {
 		const result = await addDoc(ref, item);
 
 		// Update inventory
-		const docRef = doc(collection(db, 'users'), req.params.userID);
+		const docRef = doc(collection(db, 'users'), req.params.userId);
 		const querySnapshot = await updateDoc(docRef, {
 			inventory: arrayUnion(result.id),
 		});
-
-		return res.status(200).send({
-			message: 'Successfully added item to inventory.',
-			inventoryItemId: result.id,
-			inventoryItem: item,
-		});
+		res.locals.invItemId = result.id;
+		res.locals.invItem = item;
+		next();
+		
 	} catch (e) {
 		console.error(e);
 		return res.status(400).send(`Error: ${e}`);
 	}
 };
 
-const removeItemFromInventory = async function (req, res) {
+const removeItemFromInventory = async function (req, res, next) {
 	const db = getDb();
 	try {
 		// Remove reference from inventory
 		// TODO: Remove from equipped items if equipped
-		const invItemId = req.params.invItemID;
-		const docRef = doc(collection(db, 'users'), req.params.userID);
+		const invItemId = req.params.invItemId;
+		const docRef = doc(collection(db, 'users'), req.params.userId);
 		const querySnapshot = await updateDoc(docRef, {
 			inventory: arrayRemove(invItemId),
 		});
@@ -267,31 +275,26 @@ const removeItemFromInventory = async function (req, res) {
 		// Delete inventory item
 		const ref = collection(db, 'inventoryItems');
 		const result = await deleteDoc(doc(ref, invItemId));
-		return res.status(200).send({
-			message: `Item with ID ${invItemId} deleted successfully`,
-		});
+		next();
 	} catch (e) {
 		console.error(e);
 		return res.status(400).send(`Error: ${e}`);
 	}
 };
 
-const equipItem = async function (req, res) {
+const equipItem = async function (req, res, next) {
 	// Req contents: InventoryItem ID
 	// prereq: confirm item is an equipment
 	const db = getDb();
 	try {
-		let slots = req.body.userResult.equippedItems;
-		slots[req.body.slot] = req.params.invItemID;
+		let slots = res.locals.userData.equippedItems;
+		slots[req.body.slot] = req.params.invItemId;
 		
-		const docRef = doc(collection(db, 'users'), req.params.userID);
+		const docRef = doc(collection(db, 'users'), req.params.userId);
 		const querySnapshot = await updateDoc(docRef, {
 			equippedItems: slots
 		});
-
-		return res.status(200).send({
-			message: `Equipped ${req.params.invItemID} to ${req.body.slot}`,
-		});
+		next();
 	} catch (e) {
 		console.error(e);
 		return res.status(400).send(`Error: ${e}`);
@@ -299,19 +302,18 @@ const equipItem = async function (req, res) {
 
 };
 
-const getEquippedItems = async function(req, res) {
+const getEquippedItems = async function(req, res, next) {
 	// Stored as array of invitem IDs
 	res.send('TODO');
 	
 };
 
 
-const unequipItem = async function(req, res) {
+const unequipItem = async function(req, res, next) {
 	// Takes item slot as only input
 	const db = getDb();
 	try {
-		// Remove
-		let slots = req.body.userResult.equippedItems;
+		let slots = res.locals.userData.equippedItems;
 		const equipped = slots[req.params.slot];
 		if(equipped === '')
 			return res.status(200).send({
@@ -320,14 +322,11 @@ const unequipItem = async function(req, res) {
 
 		slots[req.params.slot] = '';
 		
-		const docRef = doc(collection(db, 'users'), req.params.userID);
+		const docRef = doc(collection(db, 'users'), req.params.userId);
 		const querySnapshot = await updateDoc(docRef, {
 			equippedItems: slots
 		});
-
-		return res.status(200).send({
-			message: `Unequipped ${req.params.slot}`,
-		});
+		next();
 	} catch (e) {
 		console.error(e);
 		return res.status(400).send(`Error: ${e}`);
@@ -339,14 +338,15 @@ const increaseGold = async function(req, res) {
 }
 const decreaseGold = async function(req, res) {}
 
+// #endregion
 
 module.exports = {
 	vr_createUser,
-	vr_getUserByID,
+	vr_getUserById,
 
-	mw_sanitizeUser,
-	mw_verifyInventoryItemExists,
-	mw_getUserByID,
+	sanitizeUser,
+	verifyInventoryItemExists,
+	getUserById,
 
 	createUser,
 	getAllUsers,

@@ -13,78 +13,112 @@ const router = express.Router();
 // Routes
 router.route('/health').get((req, res) => res.send('User database'));
 router.route('/').get(usersController.getAllUsers);
-router.route('/:userID').get(
+router.route('/:userId').get(
 	[
-		usersController.mw_getUserByID
+		usersController.getUserById
 	], 
 	(req, res, next) => {
-		return res.status(200).send(req.body.userResult);
+		return res.status(200).send(res.locals.userData);
 	}
 );
 
+// Create new user
 router.route('/').post(
 	[
-		(req, res, next) => {
-			console.log(req.body);
-			next();
-		},
 		usersController.vr_createUser,
 		checkValidation,
+		usersController.createUser
 	],
-	usersController.createUser
+	(req, res) => {
+		return res.status(200).send({
+			message: 'Successfully created user.',
+			userId: res.locals.userId,
+			user: res.locals.userData,
+		});
+	}
 );
 
 // Get all inventory items
-router.route('/:userID/inv/').get([], usersController.getInventoryContents);
+router.route('/:userId/inv/').get(
+	[
+		usersController.getInventoryContents
+	], 
+	(req, res) => {
+		return res.status(200).send(res.locals.inventory);
+	}
+);
 
-// TODO: Make ID capitalization consistent (use Id everywhere instead of ID)
-
-// Get inventory item by ID
-router
-	.route('/:userID/inv/:invItemID')
-	.get(
-		[usersController.mw_verifyInventoryItemExists],
+// Get inventory item by Id
+router.route('/:userId/inv/:invItemId').get(
+	[
+		usersController.verifyInventoryItemExists,
 		usersController.getInventoryItemById
-	);
+	],
+	(req, res) => {
+		return res.status(200).send(res.locals.invItemResult);	
+	}
+);
 
 // Add item to inventory
-router.route('/:userID/inv/:itemID').post(
+router.route('/:userId/inv/:itemId').post(
 	[
 		// Todo: Authenticate
 		//itemsController.mw_verifyItemExists
+		usersController.addItemToInventory
 	],
-	usersController.addItemToInventory
+	(req, res) => {
+		return res.status(200).send({
+			message: 'Successfully added item to inventory.',
+			inventoryItemId: res.locals.invItemId,
+			inventoryItem: res.locals.invItem,
+		});
+	}
 );
 
-// Delete inventory item by ID
-router.route('/:userID/inv/:invItemID').delete(
+// Delete inventory item by Id
+router.route('/:userId/inv/:invItemId').delete(
 	[
 		// Todo: Authenticate
-		// Make sure inventory item is present in user's inventory
-		usersController.mw_verifyInventoryItemExists,
+		usersController.verifyInventoryItemExists,
+		usersController.removeItemFromInventory
 	],
-	usersController.removeItemFromInventory
+	(req, res) => {
+		return res.status(200).send({
+			message: `Item with ID ${req.params.invItemId} deleted successfully`,
+		});
+	}
 );
 
 // Get equipped items
-//router.route('/:userID/inv/equipped').get([usersController.mw_sanitizeUser]);
-router.route('/:userID/inv/equip/:invItemID').post(
+//router.route('/:userId/inv/equipped').get();
+
+// Equip item
+router.route('/:userId/inv/equip/:invItemId').post(
 	[
-		usersController.mw_verifyInventoryItemExists,
-		usersController.mw_getUserByID
+		usersController.verifyInventoryItemExists,
+		usersController.getUserById,
+		usersController.equipItem
 	], 
-	usersController.equipItem
+	(req, res) => {
+		return res.status(200).send({
+			message: `Equipped ${req.params.invItemId} to ${req.body.slot}`,
+		});
+	}
 );
 
-router.route('/:userID/inv/unequip/:slot').post(
+// Unequip item
+router.route('/:userId/inv/unequip/:slot').post(
 	[
-		usersController.mw_getUserByID
+		usersController.getUserById,
+		usersController.unequipItem
 	], 
-	usersController.unequipItem
+	(req, res) => {
+		return res.status(200).send({
+			message: `Unequipped ${req.params.slot}`,
+		});
+	}
 );
-//router.route('/:userID/inv/buyItem').post([], usersController.unequipItem);
-
-
+//router.route('/:userId/inv/buyItem').post([], usersController.unequipItem);
 
 
 module.exports = router;
