@@ -1,5 +1,6 @@
 // Imports
 const express = require('express');
+const { check, param } = require('express-validator');
 const { validationResult } = require('express-validator');
 
 // Local imports
@@ -15,6 +16,10 @@ router.route('/health').get((req, res) => res.send('User database'));
 router.route('/').get(usersController.getAllUsers);
 router.route('/:userId').get(
 	[
+		[
+			param('userId').exists().notEmpty().withMessage('User ID required'),
+		],
+		checkValidation,
 		usersController.getUserById
 	], 
 	(req, res, next) => {
@@ -25,7 +30,12 @@ router.route('/:userId').get(
 // Create new user
 router.route('/').post(
 	[
-		usersController.vr_createUser,
+		[
+			check('name')
+				.notEmpty()
+				.withMessage('User name required')
+				.isLength({ max: 40 }),	
+		],
 		checkValidation,
 		usersController.createUser
 	],
@@ -51,7 +61,6 @@ router.route('/:userId/inv/').get(
 // Get inventory item by Id
 router.route('/:userId/inv/:invItemId').get(
 	[
-		usersController.verifyInventoryItemExists,
 		usersController.getInventoryItemById
 	],
 	(req, res) => {
@@ -79,7 +88,8 @@ router.route('/:userId/inv/:itemId').post(
 router.route('/:userId/inv/:invItemId').delete(
 	[
 		// Todo: Authenticate
-		usersController.verifyInventoryItemExists,
+		usersController.getInventoryItemById,
+		// TODO: Unequip item if ID matches
 		usersController.removeItemFromInventory
 	],
 	(req, res) => {
@@ -95,7 +105,8 @@ router.route('/:userId/inv/:invItemId').delete(
 // Equip item
 router.route('/:userId/inv/equip/:invItemId').post(
 	[
-		usersController.verifyInventoryItemExists,
+		// TODO: Validation rules - verify that equip slot begins with lowercase and matches one of equipment slot fields
+		usersController.getInventoryItemById,
 		usersController.getUserById,
 		usersController.equipItem
 	], 
@@ -118,7 +129,26 @@ router.route('/:userId/inv/unequip/:slot').post(
 		});
 	}
 );
-//router.route('/:userId/inv/buyItem').post([], usersController.unequipItem);
+router.route('/:userId/inv/buy/:itemId').post(
+	[
+		usersController.getUserById,
+		// Placeholder until items.controller is updated
+		(req, res, next) => {
+			console.log("Here");
+			res.locals.transactionAmount = -10;
+			next();
+		},
+		usersController.updateGoldValue,
+		usersController.addItemToInventory
+	],
+	(req, res) => {
+		return res.status(200).send({
+			message: 'Successfully purchased item.',
+			inventoryItemId: res.locals.invItemId,
+			inventoryItem: res.locals.invItem,
+		});
+	}
+);
 
 
 module.exports = router;

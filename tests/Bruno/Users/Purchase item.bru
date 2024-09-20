@@ -1,0 +1,15 @@
+meta {
+  name: Purchase item
+  type: http
+  seq: 7
+}
+
+post {
+  url: http://localhost:3030/users/{{userId}}/inv/8Y91gbruPWv8z3OlXnmi
+  body: none
+  auth: none
+}
+
+script:post-response {
+  bru.setVar("invItemId", res.body.inventoryItemId);
+}

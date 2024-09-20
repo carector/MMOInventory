@@ -1,5 +1,4 @@
 // #region Imports
-const { check, param } = require('express-validator');
 const {
 	doc,
 	setDoc,
@@ -14,6 +13,7 @@ const {
 	query,
 	where,
 	documentId,
+	increment,
 } = require('firebase/firestore');
 const { userConverter, User } = require('../models/users.model.js');
 const {
@@ -24,48 +24,9 @@ const { getDb } = require('../fb.js');
 const { FirebaseError } = require('firebase/app');
 // #endregion
 
-// #region Validation rules
-// TODO: Move validation rules to route file
-const vr_createUser = [
-	check('name')
-		.notEmpty()
-		.withMessage('User name required')
-		.isLength({ max: 40 }),
-];
-
-const vr_getUserById = [
-	param('userId').exists().notEmpty().withMessage('User ID required'),
-];
-const vr_addItemToInventory = [];
-const vr_removeItemFromInventory = [];
-const vr_equipItem = [];
-// #endregion
-
-
 // #region Middleware functions
 const getInventoryItemIdFromIndex = async function (req, res, next) {};
-const verifyInventoryItemExists = async function (req, res, next) {
-	const db = getDb();
-	const userId = req.params.userId;
-	try {
-		const itemCatalogRef = await collection(db, 'inventoryItems');
-		const result = await getDoc(doc(itemCatalogRef, req.params.invItemId)); // TODO: Near-identical to getInventoryItem, consolidate into one fcn
-		if (result.exists()) {
-			// Make sure current user owns this item
-			if (result.data().ownerId !== userId)
-				return res.status(401).send({
-					error: `Inventory item with ID ${req.params.invItemId} not owned by user with ID ${userId}`,
-				});
-			next();
-		} else
-			return res.status(404).send({
-				error: `Inventory item with ID ${req.params.invItemId} not found`,
-			});
-	} catch (e) {
-		console.error(e);
-		return res.status(400).send(`Error: ${e}`);
-	}
-};
+// const verifyInventoryItemExists = async function (req, res, next) {};
 
 const getUserById = async function (req, res, next) {
 	const db = getDb();
@@ -222,7 +183,7 @@ const getInventoryItemById = async function (req, res, next) {
 			next();
 		} else
 			return res.status(404).send({
-				error: `Inventory item with Id ${req.params.invItemId} not found`,
+				error: `Inventory item with ID ${req.params.invItemId} not found`,
 			});
 	} catch (e) {
 		console.error(e);
@@ -285,6 +246,7 @@ const removeItemFromInventory = async function (req, res, next) {
 const equipItem = async function (req, res, next) {
 	// Req contents: InventoryItem ID
 	// prereq: confirm item is an equipment
+
 	const db = getDb();
 	try {
 		let slots = res.locals.userData.equippedItems;
@@ -316,9 +278,7 @@ const unequipItem = async function(req, res, next) {
 		let slots = res.locals.userData.equippedItems;
 		const equipped = slots[req.params.slot];
 		if(equipped === '')
-			return res.status(200).send({
-				message: `No item equipped to ${req.params.slot}`,
-			});
+			return next(); //return res.status(400).send({message: `No item equipped to ${req.params.slot}`,});
 
 		slots[req.params.slot] = '';
 		
@@ -333,24 +293,33 @@ const unequipItem = async function(req, res, next) {
 	}
 }
 
-const increaseGold = async function(req, res) {
+const updateGoldValue = async function(req, res, next) {
+	if(!res.locals.transactionAmount || !res.locals.userData?.gold)
+		return res.status(428).send({error: 'Middleware preconditions not satisfied'});
 
+	if(res.locals.userData.gold + res.locals.transactionAmount < 0)
+		return res.status(400).send({error: `Insufficient funds: ${-res.locals.transactionAmount} gold required but user only had ${res.locals.userData.gold}`});
+
+	const db = getDb();
+	try {		
+		const docRef = doc(collection(db, 'users'), req.params.userId);
+		const querySnapshot = await updateDoc(docRef, {
+			gold: increment(res.locals.transactionAmount)
+		});
+		next();
+	} catch (e) {
+		console.error(e);
+		return res.status(400).send(`Error: ${e}`);
+	}
 }
-const decreaseGold = async function(req, res) {}
 
 // #endregion
 
 module.exports = {
-	vr_createUser,
-	vr_getUserById,
-
 	sanitizeUser,
-	verifyInventoryItemExists,
 	getUserById,
-
 	createUser,
 	getAllUsers,
-
 	addItemToInventory,
 	getInventoryContents,
 	getInventoryItemById,
@@ -358,6 +327,5 @@ module.exports = {
 	equipItem,
 	getEquippedItems,
 	unequipItem,
-	increaseGold,
-	decreaseGold
+	updateGoldValue,
 };
