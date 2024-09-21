@@ -34,12 +34,12 @@ class ItemType {
 }
 
 class EquipmentType {
-	static Head = new EquipmentType('Head');
-	static Chest = new EquipmentType('Chest');
-	static LeftHand = new EquipmentType('LeftHand');
-	static RightHand = new EquipmentType('RightHand');
-	static Legs = new EquipmentType('Legs');
-	static Feet = new EquipmentType('Feet');
+	static head = new EquipmentType('head');
+	static chest = new EquipmentType('chest');
+	static leftHand = new EquipmentType('leftHand');
+	static rightHand = new EquipmentType('rightHand');
+	static legs = new EquipmentType('legs');
+	static feet = new EquipmentType('feet');
 
 	constructor(type) {
 		this.type = type;
