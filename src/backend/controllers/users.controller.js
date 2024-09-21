@@ -289,8 +289,8 @@ const unequipItem = async function(req, res, next) {
 	}
 }
 
-const updateGoldValue = async function(req, res, next) {
-	if(!res.locals.transactionAmount || !res.locals.userData?.gold)
+const performGoldTransaction = async function(req, res, next) {
+	if(!res.locals.transactionAmount || res.locals.userData?.gold === undefined)
 		return res.status(428).send({error: 'Middleware preconditions not satisfied'});
 
 	if(res.locals.userData.gold + res.locals.transactionAmount < 0)
@@ -322,5 +322,5 @@ module.exports = {
 	removeItemFromInventory,
 	equipItem,
 	unequipItem,
-	updateGoldValue,
+	performGoldTransaction,
 };

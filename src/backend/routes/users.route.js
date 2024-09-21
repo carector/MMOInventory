@@ -185,16 +185,16 @@ router.route('/:userId/inv/unequip/:slot').post(
 );
 
 // Purchase item
-router.route('/:userId/buy/:itemId').post(
+router.route('/:userId/inv/buy/:itemId').post(
 	[
+		// TODO: Itemcontroller: get item by ID so we can attach it to result body
 		usersController.getUserById,
-		// Placeholder until items.controller is updated
+		// Placeholder middleware until items.controller is updated
 		(req, res, next) => {
-			console.log("Here");
 			res.locals.transactionAmount = -10;
 			next();
 		},
-		usersController.updateGoldValue,
+		usersController.performGoldTransaction,
 		usersController.addItemToInventory
 	],
 	(req, res) => {
@@ -202,6 +202,7 @@ router.route('/:userId/buy/:itemId').post(
 			message: 'Successfully purchased item.',
 			inventoryItemId: res.locals.invItemId,
 			inventoryItem: res.locals.invItem,
+			
 		});
 	}
 );
