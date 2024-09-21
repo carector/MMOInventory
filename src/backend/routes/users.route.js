@@ -7,6 +7,9 @@ const { validationResult } = require('express-validator');
 const usersController = require('../controllers/users.controller.js');
 const itemsController = require('../controllers/items.controller.js');
 const { checkValidation } = require('../common.js');
+const {
+	EquipmentType,
+} = require('../models/items.model.js');
 
 // Definitions
 const router = express.Router();
@@ -35,8 +38,10 @@ router.route('/').post(
 				.notEmpty()
 				.withMessage('User name required')
 				.isLength({ max: 40 }),	
+			// TODO: Will user model need to store auth data? How to determine which user belongs to which real-world google/email account?
 		],
 		checkValidation,
+		// TODO: Authenticate
 		usersController.createUser
 	],
 	(req, res) => {
@@ -49,6 +54,7 @@ router.route('/').post(
 );
 
 // Get all inventory items
+// Not a privileged action? Should be able to see everyone's inventory
 router.route('/:userId/inv/').get(
 	[
 		usersController.getInventoryContents
@@ -71,8 +77,8 @@ router.route('/:userId/inv/:invItemId').get(
 // Add item to inventory
 router.route('/:userId/inv/:itemId').post(
 	[
-		// Todo: Authenticate
-		//itemsController.mw_verifyItemExists
+		// TODO: Authenticate
+		// TODO: Itemcontroller: get item by ID so we can attach it to result body
 		usersController.addItemToInventory
 	],
 	(req, res) => {
@@ -89,7 +95,18 @@ router.route('/:userId/inv/:invItemId').delete(
 	[
 		// Todo: Authenticate
 		usersController.getInventoryItemById,
-		// TODO: Unequip item if ID matches
+		usersController.getUserById,
+		async (req, res, next) => {
+			// Unequip item if ID matches
+			const equipmentType = res.locals.invItemResult.item.equipmentType.charAt(0).toLowerCase() + res.locals.invItemResult.item.equipmentType.slice(1);
+			if(res.locals.invItemResult.documentId === res.locals.userData.equippedItems[equipmentType]) {
+				console.log("Item was equipped. Unequipping...");
+				req.params.slot = equipmentType;
+				usersController.unequipItem(req, res, next);
+			}
+			else
+				next();
+		},
 		usersController.removeItemFromInventory
 	],
 	(req, res) => {
@@ -99,8 +116,45 @@ router.route('/:userId/inv/:invItemId').delete(
 	}
 );
 
-// Get equipped items
-//router.route('/:userId/inv/equipped').get();
+// Get all equipped items
+router.route('/:userId/inv/equipped/all').get(
+	[
+		usersController.getUserById,
+		usersController.getInventoryContents
+	],
+	(req, res) => {
+		let equippedItems = [];
+		Object.values(res.locals.userData.equippedItems).forEach(equippedItemId => {
+			if(equippedItemId !== '')
+				equippedItems.push(res.locals.inventory.filter(i => {return i.documentId === equippedItemId}));
+		});
+		return res.status(200).send(equippedItems);
+	}
+);
+
+// Get single equipped item
+router.route('/:userId/inv/equipped/:slot').get(
+	[
+		[
+			param('slot')
+				.isIn(Object.keys(EquipmentType))
+				.withMessage(
+					`slot must be one of the following options: ${Object.keys(
+						EquipmentType
+					).toString()}`)
+		],
+		checkValidation,
+		usersController.getUserById,
+		usersController.getInventoryContents
+	],
+	(req, res) => {
+		let equippedItem = {};
+		const equippedItemId = res.locals.userData.equippedItems[req.params.slot];
+		if(equippedItemId !== '')
+			equippedItem = res.locals.inventory.filter(i => {return i.documentId === equippedItemId})[0];
+		return res.status(equippedItem.documentId ? 200 : 404).send(equippedItem);
+	}
+);
 
 // Equip item
 router.route('/:userId/inv/equip/:invItemId').post(
@@ -129,7 +183,9 @@ router.route('/:userId/inv/unequip/:slot').post(
 		});
 	}
 );
-router.route('/:userId/inv/buy/:itemId').post(
+
+// Purchase item
+router.route('/:userId/buy/:itemId').post(
 	[
 		usersController.getUserById,
 		// Placeholder until items.controller is updated

@@ -1,0 +1,11 @@
+meta {
+  name: Get item equipped to chest
+  type: http
+  seq: 13
+}
+
+get {
+  url: http://localhost:3030/users/{{userId}}/inv/equipped/chest
+  body: none
+  auth: none
+}

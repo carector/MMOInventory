@@ -264,12 +264,6 @@ const equipItem = async function (req, res, next) {
 
 };
 
-const getEquippedItems = async function(req, res, next) {
-	// Stored as array of invitem IDs
-	res.send('TODO');
-	
-};
-
 
 const unequipItem = async function(req, res, next) {
 	// Takes item slot as only input
@@ -277,8 +271,10 @@ const unequipItem = async function(req, res, next) {
 	try {
 		let slots = res.locals.userData.equippedItems;
 		const equipped = slots[req.params.slot];
-		if(equipped === '')
+		if(equipped === '') {
+			console.log(`No item equipped to ${equipped}`);
 			return next(); //return res.status(400).send({message: `No item equipped to ${req.params.slot}`,});
+		}
 
 		slots[req.params.slot] = '';
 		
@@ -325,7 +321,6 @@ module.exports = {
 	getInventoryItemById,
 	removeItemFromInventory,
 	equipItem,
-	getEquippedItems,
 	unequipItem,
 	updateGoldValue,
 };
