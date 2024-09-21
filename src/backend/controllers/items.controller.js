@@ -1,5 +1,4 @@
-// Imports
-const { check, param, body } = require('express-validator');
+// #region Imports
 const {
 	doc,
 	getDoc,
@@ -13,86 +12,26 @@ const {
 
 const { getDb } = require('../fb.js');
 const {
-	Item,
-	ItemType,
-	EquipmentType,
 	itemConverter,
 	convertToSubclass
 } = require('../models/items.model.js');
 const { toBool } = require('../common.js');
+// #endregion
 
-// Request body validation rules
-const vr_getItemByID = [
-	param('itemID').exists().notEmpty().withMessage('Item ID required'),
-];
-
-const vr_createItem = [
-	check('baseItemName')
-		.exists()
-		.notEmpty()
-		.withMessage('Item name required')
-		.isLength({ max: 40 }),
-	check('description')
-		.optional()
-		.isLength({ max: 256 })
-		.withMessage('Description must be under 256 characters long'),
-	check('itemType')
-		.exists()
-		.withMessage('Item type required')
-		.isIn(Object.keys(ItemType))
-		.withMessage(
-			`itemType must be one of the following options: ${Object.keys(
-				ItemType
-			).toString()}`
-		),
-	check('equipmentType')
-		.if(body('itemType').isIn(['Equipment']))
-		.exists()
-		.withMessage('equipmentType required')
-		.isIn(Object.keys(EquipmentType))
-		.withMessage(
-			`equipmentType must be one of the following options: ${Object.keys(
-				EquipmentType
-			).toString()}`
-		),
-	check('stackable')	// TODO: Disable stacking for equipment?
-		.optional()
-		.isBoolean()
-		.withMessage('Stackable must either be true or false'),
-	check('goldValue')
-		.optional()
-		.isInt()
-		.withMessage('Gold value must be an integer number')
-];
-
-const vr_enableDisableItemGlobally = [
-	param('itemID').exists().notEmpty().withMessage('Item ID required'),
-	check('disabled')
-		.exists()
-		.withMessage('Disabled state required')
-		.isBoolean()
-		.withMessage('Disabled must be a true/false value'),
-];
-
-const vr_deleteItemByID = [
-	param('itemID').exists().notEmpty().withMessage('Item ID required'),
-];
-
-// Middleware
 // sanitize item further? (done already by item class constructor)
-// 
 
-// Route endpoints
-const getItemByID = async function (req, res) {
+// #region Middleware functions
+const getItemById = async function (req, res, next) {
 	const db = getDb();
 	try {
 		const itemCatalogRef = await collection(db, 'itemCatalog');
-		const result = await getDoc(doc(itemCatalogRef, req.params.itemID));
+		const result = await getDoc(doc(itemCatalogRef, req.params.itemId));
 		if (result.exists()) {
-			return res.status(200).send(result.data());
+			res.locals.item = result.data();
+			next();
 		} else
 			return res.status(404).send({
-				error: `Item with ID ${req.params.itemID} not found`,
+				error: `Item with ID ${req.params.itemId} not found`,
 			});
 	} catch (e) {
 		console.error(e);
@@ -100,7 +39,8 @@ const getItemByID = async function (req, res) {
 	}
 };
 
-const getAllItems = async function (req, res) {
+const getAllItems = async function (req, res, next) {
+	// TODO: React-style pagination
 	const db = getDb();
 	try {
 		const querySnapshot = await getDocs(collection(db, 'itemCatalog'));
@@ -110,14 +50,15 @@ const getAllItems = async function (req, res) {
 			if (!(doc.data().disabledGlobally && !includeDisabled))
 				items.push({ documentId: doc.id, ...doc.data() });
 		});
-		return res.status(200).send(items);
+		res.locals.items = items;
+		next();
 	} catch (e) {
 		console.error(e);
 		return res.status(400).send(`Error: ${e}`);
 	}
 };
 
-const createItem = async function (req, res) {
+const createItem = async function (req, res, next) {
 	// TODO
 	// Require admin auth
 	const db = getDb();
@@ -125,12 +66,10 @@ const createItem = async function (req, res) {
 		const ref = collection(db, 'itemCatalog');
 		console.log(req.body);
 		const u = itemConverter.toFirestore(convertToSubclass(req.body));
-		const result = await addDoc(ref, u);	
-		return res.status(200).send({
-			message: 'Successfully created item.',
-			itemId: result.id,
-			item: u,
-		});
+		const result = await addDoc(ref, u);
+		res.locals.item = u;
+		res.locals.itemId = result.id;
+		next();
 	} catch (e) {
 		console.error(e);
 		return res.status(400).send(`Error: ${e}`);
@@ -139,35 +78,26 @@ const createItem = async function (req, res) {
 
 // Allows admins to disable a certain item game-wide
 // Useful for items / equipment that may be causing bugs or balance issues
-const enableDisableItemGlobally = async function (req, res) {
-	// TODO
-	// Require admin auth
+const enableDisableItemGlobally = async function (req, res, next) {
 	const db = getDb();
 	try {
-		const ref = doc(db, 'itemCatalog', req.params.itemID);
+		const ref = doc(db, 'itemCatalog', req.params.itemId);
 		const result = await updateDoc(ref, {
 			disabledGlobally: toBool(req.body.disabled),
 		});
-		return res.status(200).send({
-			message: 'Successfully updated global enabled/disabled state.',
-			result: result,
-		});
+		next();
 	} catch (e) {
 		console.error(e);
 		return res.status(400).send(`Error: ${e}`);
 	}
 };
 
-const deleteItemByID = async function (req, res) {
-	// TODO
-	// Require admin auth
+const deleteItemById = async function (req, res, next) {
 	const db = getDb();
 	try {
 		const itemCatalogRef = await collection(db, 'itemCatalog');
-		const result = await deleteDoc(doc(itemCatalogRef, req.params.itemID));
-		return res.status(200).send({
-			message: `Item with ID ${req.params.itemID} deleted successfully`,
-		});
+		const result = await deleteDoc(doc(itemCatalogRef, req.params.itemId));
+		next();
 	} catch (e) {
 		console.error(e);
 		return res.status(400).send(`Error: ${e}`);
@@ -176,48 +106,42 @@ const deleteItemByID = async function (req, res) {
 
 const importItemsFromJSON = async function (req, res) {
 	// TODO
-	// Requires admin auth
 	// Validate json array of items
 	// - Return errors if present
 	// Create items in DB for each item in JSON
 
-	const db = getDb();
-	try {
-		const items = req.body.items;
-		const batch = writeBatch(db);
-		const ref = collection(db, 'itemCatalog');
+	// const db = getDb();
+	// try {
+	// 	const items = req.body.items;
+	// 	const batch = writeBatch(db);
+	// 	const ref = collection(db, 'itemCatalog');
 
-		items.forEach((item) => {
-			const u = itemConverter.toFirestore(convertToSubclass(item));
-			// Need to generate doc ID - 'set' doesn't create one
-			console.log(u);
-			batch.set(ref, u);
-		})
+	// 	items.forEach((item) => {
+	// 		const u = itemConverter.toFirestore(convertToSubclass(item));
+	// 		// Need to generate doc ID - 'set' doesn't create one
+	// 		console.log(u);
+	// 		batch.set(ref, u);
+	// 	})
 
-		const result = await batch.commit();
-		console.log("Committed?");
-		return res.status(200).send({
-			message: 'Successfully created items.',
-			items: result.data()
-		});
-	} catch (e) {
-		console.error(e);
-		return res.status(400).send(`Error: ${e}`);
-	}
+	// 	const result = await batch.commit();
+	// 	console.log("Committed?");
+	// 	return res.status(200).send({
+	// 		message: 'Successfully created items.',
+	// 		items: result.data()
+	// 	});
+	// } catch (e) {
+	// 	console.error(e);
+	// 	return res.status(400).send(`Error: ${e}`);
+	// }
 };
+// #endregion
+
 
 module.exports = {
-	vr_getItemByID,
-	vr_createItem,
-	vr_enableDisableItemGlobally,
-	vr_deleteItemByID,
-
-	
-
-	getItemByID,
+	getItemById,
 	getAllItems,
 	createItem,
 	enableDisableItemGlobally,
-	deleteItemByID,
+	deleteItemById,
 	importItemsFromJSON,
 };
