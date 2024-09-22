@@ -81,7 +81,7 @@ router
 					.optional()
 					.isBoolean()
 					.withMessage('Stackable must either be true or false'),
-							check('goldValue')
+				check('goldValue')
 						.optional()
 						.isInt()
 						.withMessage('Gold value must be an integer number')
