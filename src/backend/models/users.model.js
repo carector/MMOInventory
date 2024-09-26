@@ -3,7 +3,7 @@ class User {
 	constructor(data) {
 		this.name = data.name || 'New User';
 		this.inventory = data.inventory || [];
-		this.gold = data.gold >= 0 ? data.gold : 0 || 0;
+		this.gold = data.gold >= 0 ? data.gold : 0 || 0;	// Positive values only
 		this.equippedItems = {
 			head: data.equippedItems?.head || '',
 			chest: data.equippedItems?.chest || '',

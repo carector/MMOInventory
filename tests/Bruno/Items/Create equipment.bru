@@ -16,10 +16,12 @@ body:json {
     "description": "A big, hulking slab of steel to protect your important bits",
     "itemType": "Equipment",
     "equipmentType": "chest",
-    "stackable": true
+    "stackable": true,
+    "goldValue": 25
   }
 }
 
 script:post-response {
-  bru.setVar("itemId", res.body.itemId);
+  if(res.body.itemId)
+    bru.setVar("itemId", res.body.itemId);
 }

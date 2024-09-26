@@ -38,6 +38,10 @@ router.route('/').post(
 				.notEmpty()
 				.withMessage('User name required')
 				.isLength({ max: 40 }),	
+			check('gold')
+				.optional()
+				.isInt()
+				.withMessage('Gold must be an integer number')
 			// TODO: Will user model need to store auth data? How to determine which user belongs to which real-world google/email account?
 		],
 		checkValidation,
@@ -78,7 +82,7 @@ router.route('/:userId/inv/:invItemId').get(
 router.route('/:userId/inv/:itemId').post(
 	[
 		// TODO: Authenticate
-		// TODO: Itemcontroller: get item by ID so we can attach it to result body
+		itemsController.getItemById,	// Verify item exists
 		usersController.addItemToInventory
 	],
 	(req, res) => {
@@ -188,10 +192,12 @@ router.route('/:userId/inv/unequip/:slot').post(
 router.route('/:userId/inv/buy/:itemId').post(
 	[
 		// TODO: Itemcontroller: get item by ID so we can attach it to result body
+		itemsController.getItemById,
 		usersController.getUserById,
-		// Placeholder middleware until items.controller is updated
 		(req, res, next) => {
-			res.locals.transactionAmount = -10;
+			res.locals.transactionAmount = -res.locals.item.goldValue;
+			if(res.locals.transactionAmount > 0)
+				res.locals.transactionAmount *= -1;
 			next();
 		},
 		usersController.performGoldTransaction,
