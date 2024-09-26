@@ -6,11 +6,13 @@ const {
 	getDocs,
 } = require('firebase/firestore');
 const { getAnalytics } = require('firebase/analytics');
+const { initializeAuth } = require('firebase/auth');
 require('dotenv').config(); // TODO: Figure out why this is required for anything using .env file
 
 // Firebase setup
 let db;
 let app;
+let auth;
 
 const setupFirebase = async () => {
 	// Set up config
@@ -39,10 +41,14 @@ const setupFirebase = async () => {
 	db = initializeFirestore(app, {
 		experimentalForceLongPolling: true,
 	});
+	auth = initializeAuth(app);
 	console.log('Firebase initialized');
 };
 
 module.exports.setupFirebase = setupFirebase;
 module.exports.getDb = function() {
 	return db;
+}
+module.exports.getAuth = function() {
+	return auth;
 }

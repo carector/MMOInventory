@@ -87,7 +87,9 @@ const createUser = async function (req, res, next) {
 	try {
 		// Req contents: name
 		const ref = collection(db, 'users');
-		const u = userConverter.toFirestore(new User(req.body));
+		const uid = res.locals.authResult.user.uid;
+		console.log(uid);
+		const u = userConverter.toFirestore(new User({...req.body, authUid: uid}));
 		const result = await addDoc(ref, u);
 		res.locals.userData = u;
 		res.locals.userId = result.id;
