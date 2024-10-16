@@ -33,11 +33,11 @@ mmo-inventory is a RESTful MMO-style inventory API that makes it easy to manage 
 Coming soon
 
 ## Tech stack
-- Express.js
-- Google Firebase
-- React
-- Bruno
-- Figma
+- [Express.js](https://expressjs.com/)
+- [Google Firebase](https://firebase.google.com/)
+- [React](https://react.dev/)
+- [Bruno](https://www.usebruno.com/)
+- [Figma](https://www.figma.com/)
 
 ## Installation
 
