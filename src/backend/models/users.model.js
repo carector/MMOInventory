@@ -1,7 +1,7 @@
 // Model
 class User {
 	constructor(data) {
-		this.authUid = data.authUid;
+		this.uid = data.uid;
 		this.name = data.name || 'New User';
 		this.inventory = data.inventory || [];
 		this.gold = data.gold >= 0 ? data.gold : 0 || 0;	// Positive values only
@@ -20,7 +20,7 @@ class User {
 const userConverter = {
 	toFirestore: (user) => {
 		return {
-			authUid: user.authUid,
+			uid: user.uid,
 			name: user.name,
 			gold: user.gold,
 			inventory: user.inventory,

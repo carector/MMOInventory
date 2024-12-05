@@ -10,7 +10,7 @@ const verifyUserToken = async function (req, res, next) {
 	const token = req.body.idToken;
 	try {
 		const result = await auth.verifyIdToken(token);
-		res.locals.authResult = result;
+		res.locals.authUserResult = result;
 		next();
 	} catch (e) {
 		return res.status(400).send(`Authentication error: ${e}`);
@@ -27,6 +27,7 @@ const createUserWithEmailAndPassword = async function (req, res, next) {
 			email,
 			password
 		);
+		res.locals.authUserResult = result.user;
 		res.locals.authResult = result;
 		next();
 	} catch (e) {
@@ -62,10 +63,9 @@ const signInWithEmail = async function (req, res, next) {
 			email,
 			password
 		);
-		res.locals.authResult = result;
+		res.locals.authUserResult = result;
 		next();
 	} catch (e) {
-		console.log(e);
 		return res.status(400).send(`Error signing in: ${e}`);
 	}
 };

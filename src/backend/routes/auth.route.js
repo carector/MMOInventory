@@ -16,33 +16,32 @@ const router = express.Router();
 router.route('/health').get((req, res) => res.send('Auth controller'));
 
 // Create user using email+password
-router.route('/signup').post(
-    [
-        authController.createUserWithEmailAndPassword,
-        usersController.createUser,
-    ],
-    (req, res) => {
-        res.send({authResult: res.locals.authResult, userData: res.locals.userData});
-    }
-)
+router
+	.route('/signup')
+	.post(
+		[
+			authController.createUserWithEmailAndPassword,
+			usersController.createUser,
+		],
+		(req, res) => {
+			res.send({
+				message: res.locals.authUserResult
+					? 'Successfully created user.'
+					: 'Successfully created guest user. (Expires in 1 hour)',
+				userAuth: res.locals.authUserResult,
+				tokens: res.locals.authResult._tokenResponse,
+				userData: res.locals.userData,
+			});
+		}
+	);
 
-router.route('/signin').get(
-    [
-        authController.signInWithEmail
-    ],
-    (req, res) => {
-        res.send({authResult: res.locals.authResult});
-    }
-)
+router.route('/signin').get([authController.signInWithEmail], (req, res) => {
+	res.send(res.locals.authUserResult);
+});
 
-router.route('/verify').get(
-    [
-        authController.verifyUserToken
-    ],
-    (req, res) => {
-        res.send("YEP!");
-    }
-)
+router.route('/verify').get([authController.verifyUserToken], (req, res) => {
+	res.send(res.locals.authUserResult);
+});
 
 // #endregion
 

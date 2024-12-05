@@ -28,11 +28,12 @@ const { FirebaseError } = require('firebase/app');
 const getInventoryItemIdFromIndex = async function (req, res, next) {};
 // const verifyInventoryItemExists = async function (req, res, next) {};
 
-const getUserById = async function (req, res, next) {
+const getUserByUid = async function (req, res, next) {
 	const db = getDb();
 	try {
 		// Get user from firestore
-		const usersRef = await collection(db, 'users');
+		const usersRef = await collection(db, 'userData');
+		const q = query(usersRef, where("uid", "==", req.params.userId));
 		const result = await getDoc(doc(usersRef, req.params.userId));
 		if (result.exists()) {
 			res.locals.userData = result.data();
@@ -51,7 +52,7 @@ const sanitizeUser = async function (req, res, next) {
 	const db = getDb();
 	try {
 		// Get user from firestore
-		const usersRef = await collection(db, 'users');
+		const usersRef = await collection(db, 'userData');
 		const docRef = await doc(usersRef, req.params.userId);
 		const result = await getDoc(docRef);
 		if (!result.exists()) {
@@ -72,6 +73,16 @@ const sanitizeUser = async function (req, res, next) {
 	}
 };
 
+const userMatchesFirebaseUserUid = async function(req, res, next) {
+	const firebaseUid = res.locals.authUserResult.uid;
+	const userId = req.params.userId;
+	if(firebaseUid === userId)
+		next();
+	else
+		return res.status(400).send({error: "User ID does not match logged in user"});
+
+}
+
 const hasEnoughGold = async function(req, res, next) {
 	const db = getDb();
 	if(!res.locals.userData) {
@@ -86,13 +97,12 @@ const createUser = async function (req, res, next) {
 	const db = getDb();
 	try {
 		// Req contents: name
-		const ref = collection(db, 'users');
-		const uid = res.locals.authResult?.user.uid;	// Possible for authID to be null - guest accounts
-		console.log(uid);
-		const u = userConverter.toFirestore(new User({...req.body, authUid: uid ? uid : null}));
-		const result = await addDoc(ref, u);
-		res.locals.userData = u;
-		res.locals.userId = result.id;
+		const authUid = res.locals.authUserResult.uid;	// TODO: Find solution for guest accounts
+		console.log(authUid);
+		const data = userConverter.toFirestore(new User({...req.body, uid: authUid ? authUid : null}));
+		const result = await setDoc(doc(db, `userData/${authUid}`), data);
+		res.locals.userData = data;
+		res.locals.userId = authUid;
 		next();
 	} catch (e) {
 		console.error(e);
@@ -107,7 +117,7 @@ const scheduleUserDeletion = async function (req, res, next) {
 const getAllUsers = async function (req, res, next) {
 	const db = getDb();
 	try {
-		const querySnapshot = await getDocs(collection(db, 'users'));
+		const querySnapshot = await getDocs(collection(db, 'userData'));
 		let users = [];
 		querySnapshot.forEach((doc) => {
 			users.push({ documentId: doc.id, ...doc.data() });
@@ -123,7 +133,7 @@ const getInventoryContents = async function (req, res, next) {
 	const db = getDb();
 	try {
 		// Get user
-		const usersRef = collection(db, 'users');
+		const usersRef = collection(db, 'userData');
 		const result = await getDoc(doc(usersRef, req.params.userId));
 		if (!result.exists()) {
 			return res.status(404).send({
@@ -214,7 +224,7 @@ const addItemToInventory = async function (req, res, next) {
 		const result = await addDoc(ref, item);
 
 		// Update inventory
-		const docRef = doc(collection(db, 'users'), req.params.userId);
+		const docRef = doc(collection(db, 'userData'), req.params.userId);
 		const querySnapshot = await updateDoc(docRef, {
 			inventory: arrayUnion(result.id),
 		});
@@ -234,7 +244,7 @@ const removeItemFromInventory = async function (req, res, next) {
 		// Remove reference from inventory
 		// TODO: Remove from equipped items if equipped
 		const invItemId = req.params.invItemId;
-		const docRef = doc(collection(db, 'users'), req.params.userId);
+		const docRef = doc(collection(db, 'userData'), req.params.userId);
 		const querySnapshot = await updateDoc(docRef, {
 			inventory: arrayRemove(invItemId),
 		});
@@ -258,7 +268,7 @@ const equipItem = async function (req, res, next) {
 		let slots = res.locals.userData.equippedItems;
 		slots[req.body.slot] = req.params.invItemId;
 		
-		const docRef = doc(collection(db, 'users'), req.params.userId);
+		const docRef = doc(collection(db, 'userData'), req.params.userId);
 		const querySnapshot = await updateDoc(docRef, {
 			equippedItems: slots
 		});
@@ -284,7 +294,7 @@ const unequipItem = async function(req, res, next) {
 
 		slots[req.params.slot] = '';
 		
-		const docRef = doc(collection(db, 'users'), req.params.userId);
+		const docRef = doc(collection(db, 'userData'), req.params.userId);
 		const querySnapshot = await updateDoc(docRef, {
 			equippedItems: slots
 		});
@@ -304,7 +314,7 @@ const performGoldTransaction = async function(req, res, next) {
 
 	const db = getDb();
 	try {		
-		const docRef = doc(collection(db, 'users'), req.params.userId);
+		const docRef = doc(collection(db, 'userData'), req.params.userId);
 		const querySnapshot = await updateDoc(docRef, {
 			gold: increment(res.locals.transactionAmount)
 		});
@@ -319,7 +329,7 @@ const performGoldTransaction = async function(req, res, next) {
 
 module.exports = {
 	sanitizeUser,
-	getUserById,
+	getUserById: getUserByUid,
 	createUser,
 	getAllUsers,
 	addItemToInventory,
@@ -329,4 +339,5 @@ module.exports = {
 	equipItem,
 	unequipItem,
 	performGoldTransaction,
+	userMatchesFirebaseUserUid,
 };
