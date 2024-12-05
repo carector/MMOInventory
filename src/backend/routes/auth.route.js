@@ -35,6 +35,15 @@ router.route('/signin').get(
     }
 )
 
+router.route('/:idToken').get(
+    [
+        authController.verifyUserToken
+    ],
+    (req, res) => {
+        res.send("YEP!");
+    }
+)
+
 // #endregion
 
 module.exports = router;

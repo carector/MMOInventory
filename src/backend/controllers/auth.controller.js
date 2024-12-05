@@ -5,9 +5,19 @@ const { toBool } = require('../common.js');
 // #endregion
 
 // #region Middleware functions
-const getCurrentUser = async function (req, res, next) {
-	res.status(400).send('TODO');
-};
+const verifyUserToken = async function (req, res, next) {
+	const auth = getAuth();
+	// auth.verifyIdToken(req.params.idToken)
+	// .then((decodedToken) => {
+	//   const uid = decodedToken.uid;
+	//   console.log("Here");
+	//   // ...
+	// })
+	// .catch((error) => {
+	//   // Handle error
+	// });
+  
+}
 
 const createUserWithEmailAndPassword = async function (req, res, next) {
 	const auth = getAuth();
@@ -64,10 +74,10 @@ const signOut = async function (req, res, next) {
 // #endregion
 
 module.exports = {
-	getCurrentUser,
 	createUserWithEmailAndPassword,
 	resetPassword,
 	verifyPasswordResetCode,
+	verifyUserToken,
 	setPersistence,
 	signInWithEmail,
 	signOut,
