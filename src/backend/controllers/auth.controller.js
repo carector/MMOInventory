@@ -1,23 +1,21 @@
 // #region Imports
-const { getAuth } = require('../fb.js');
+const { getAuth, getAdminApp } = require('../fb.js');
 const fbAuth = require('firebase/auth');
 const { toBool } = require('../common.js');
 // #endregion
 
 // #region Middleware functions
 const verifyUserToken = async function (req, res, next) {
-	const auth = getAuth();
-	// auth.verifyIdToken(req.params.idToken)
-	// .then((decodedToken) => {
-	//   const uid = decodedToken.uid;
-	//   console.log("Here");
-	//   // ...
-	// })
-	// .catch((error) => {
-	//   // Handle error
-	// });
-  
-}
+	const auth = getAdminApp().auth();
+	const token = req.body.idToken;
+	try {
+		const result = await auth.verifyIdToken(token);
+		res.locals.authResult = result;
+		next();
+	} catch (e) {
+		return res.status(400).send(`Authentication error: ${e}`);
+	}
+};
 
 const createUserWithEmailAndPassword = async function (req, res, next) {
 	const auth = getAuth();
@@ -51,15 +49,19 @@ const setPersistence = async function (req, res, next) {
 }; // i.e. stay logged in checkbox
 
 // Credentials
-const getGoogleCredential = async function (req, res, next) { };
-const signInUsingCredential = async function (req, res, next) { };
+const getGoogleCredential = async function (req, res, next) {};
+const signInUsingCredential = async function (req, res, next) {};
 
 const signInWithEmail = async function (req, res, next) {
 	const auth = getAuth();
 	try {
 		const email = req.body.email;
 		const password = req.body.password;
-		const result = await fbAuth.signInWithEmailAndPassword(auth, email, password);
+		const result = await fbAuth.signInWithEmailAndPassword(
+			auth,
+			email,
+			password
+		);
 		res.locals.authResult = result;
 		next();
 	} catch (e) {

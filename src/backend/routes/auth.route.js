@@ -35,7 +35,7 @@ router.route('/signin').get(
     }
 )
 
-router.route('/:idToken').get(
+router.route('/verify').get(
     [
         authController.verifyUserToken
     ],

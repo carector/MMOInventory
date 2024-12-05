@@ -5,7 +5,17 @@ meta {
 }
 
 get {
-  url: http://localhost:3030/auth/{{idToken}}
+  url: http://localhost:3030/auth/verify
   body: json
   auth: none
+}
+
+body:json {
+  {
+    "idToken": "{{idToken}}"
+  }
+}
+
+body:multipart-form {
+  idToken: {{idToken}}
 }
