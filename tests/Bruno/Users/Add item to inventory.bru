@@ -1,13 +1,19 @@
 meta {
   name: Add item to inventory
   type: http
-  seq: 6
+  seq: 7
 }
 
 post {
   url: http://localhost:3030/users/{{userId}}/inv/8Y91gbruPWv8z3OlXnmi
-  body: none
+  body: json
   auth: none
+}
+
+body:json {
+  {
+    "idToken": "{{idToken}}"
+  }
 }
 
 script:post-response {

@@ -5,7 +5,11 @@ meta {
 }
 
 get {
-  url: http://localhost:3030/users/wanya
+  url: http://localhost:3030/users/KCZXY5vje8c1vihVjeBWbELyT392
   body: none
   auth: none
+}
+
+script:post-response {
+  bru.setVar("userId", res.body.uid);
 }

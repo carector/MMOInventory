@@ -1,13 +1,19 @@
 meta {
   name: Purchase item
   type: http
-  seq: 7
+  seq: 8
 }
 
 post {
   url: http://localhost:3030/users/{{userId}}/inv/buy/oGH3B4xIKSs6rwqA19FG
-  body: none
+  body: json
   auth: none
+}
+
+body:json {
+  {
+    "idToken": "{{idToken}}"
+  }
 }
 
 script:post-response {
