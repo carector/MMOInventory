@@ -26,6 +26,15 @@ router.route('/signup').post(
     }
 )
 
+router.route('/signin').get(
+    [
+        authController.signInWithEmail
+    ],
+    (req, res) => {
+        res.send({authResult: res.locals.authResult});
+    }
+)
+
 // #endregion
 
 module.exports = router;

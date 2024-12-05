@@ -87,9 +87,9 @@ const createUser = async function (req, res, next) {
 	try {
 		// Req contents: name
 		const ref = collection(db, 'users');
-		const uid = res.locals.authResult.user.uid;
+		const uid = res.locals.authResult?.user.uid;	// Possible for authID to be null - guest accounts
 		console.log(uid);
-		const u = userConverter.toFirestore(new User({...req.body, authUid: uid}));
+		const u = userConverter.toFirestore(new User({...req.body, authUid: uid ? uid : null}));
 		const result = await addDoc(ref, u);
 		res.locals.userData = u;
 		res.locals.userId = result.id;
@@ -99,6 +99,10 @@ const createUser = async function (req, res, next) {
 		return res.status(400).send(`Error: ${e}`);
 	}
 };
+
+const scheduleUserDeletion = async function (req, res, next) {
+	
+}
 
 const getAllUsers = async function (req, res, next) {
 	const db = getDb();

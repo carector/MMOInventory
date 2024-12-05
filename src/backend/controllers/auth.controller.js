@@ -23,7 +23,7 @@ const createUserWithEmailAndPassword = async function (req, res, next) {
 		next();
 	} catch (e) {
 		console.log(e);
-		return res.status(400).send(`Error: ${e}`);
+		return res.status(400).send(`Error creating user: ${e}`);
 	}
 };
 
@@ -41,11 +41,21 @@ const setPersistence = async function (req, res, next) {
 }; // i.e. stay logged in checkbox
 
 // Credentials
-const getGoogleCredential = async function (req, res, next) {};
-const signInUsingCredential = async function (req, res, next) {};
+const getGoogleCredential = async function (req, res, next) { };
+const signInUsingCredential = async function (req, res, next) { };
 
-const signIn = async function (req, res, next) {
-	res.status(400).send('TODO');
+const signInWithEmail = async function (req, res, next) {
+	const auth = getAuth();
+	try {
+		const email = req.body.email;
+		const password = req.body.password;
+		const result = await fbAuth.signInWithEmailAndPassword(auth, email, password);
+		res.locals.authResult = result;
+		next();
+	} catch (e) {
+		console.log(e);
+		return res.status(400).send(`Error signing in: ${e}`);
+	}
 };
 const signOut = async function (req, res, next) {
 	res.status(400).send('TODO');
@@ -59,6 +69,6 @@ module.exports = {
 	resetPassword,
 	verifyPasswordResetCode,
 	setPersistence,
-	signIn,
+	signInWithEmail,
 	signOut,
 };

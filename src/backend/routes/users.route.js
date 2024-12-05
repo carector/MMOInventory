@@ -24,7 +24,7 @@ router.route('/:userId').get(
 		],
 		checkValidation,
 		usersController.getUserById
-	], 
+	],
 	(req, res, next) => {
 		return res.status(200).send(res.locals.userData);
 	}
@@ -37,7 +37,7 @@ router.route('/').post(
 			check('name')
 				.notEmpty()
 				.withMessage('User name required')
-				.isLength({ max: 40 }),	
+				.isLength({ max: 40 }),
 			check('gold')
 				.optional()
 				.isInt()
@@ -46,11 +46,18 @@ router.route('/').post(
 		],
 		checkValidation,
 		// TODO: Authenticate
-		usersController.createUser
+		usersController.createUser,
+
+		// If no authentication was provided (i.e. "sign in as guest"),
+		// delete the user after a certain amount of time
+		(req, res, next) => {
+			if (!res.locals.authResult) scheduleUserDeletion(req, res, next);
+			else next();
+		}
 	],
 	(req, res) => {
 		return res.status(200).send({
-			message: 'Successfully created user.',
+			message: res.locals.authResult ? 'Successfully created user.' : 'Successfully created guest user. (Expires in 1 hour)',
 			userId: res.locals.userId,
 			user: res.locals.userData,
 		});
@@ -62,7 +69,7 @@ router.route('/').post(
 router.route('/:userId/inv/').get(
 	[
 		usersController.getInventoryContents
-	], 
+	],
 	(req, res) => {
 		return res.status(200).send(res.locals.inventory);
 	}
@@ -74,7 +81,7 @@ router.route('/:userId/inv/:invItemId').get(
 		usersController.getInventoryItemById
 	],
 	(req, res) => {
-		return res.status(200).send(res.locals.invItemResult);	
+		return res.status(200).send(res.locals.invItemResult);
 	}
 );
 
@@ -103,7 +110,7 @@ router.route('/:userId/inv/:invItemId').delete(
 		async (req, res, next) => {
 			// Unequip item if ID matches
 			const equipmentType = res.locals.invItemResult.item.equipmentType.charAt(0).toLowerCase() + res.locals.invItemResult.item.equipmentType.slice(1);
-			if(res.locals.invItemResult.documentId === res.locals.userData.equippedItems[equipmentType]) {
+			if (res.locals.invItemResult.documentId === res.locals.userData.equippedItems[equipmentType]) {
 				console.log("Item was equipped. Unequipping...");
 				req.params.slot = equipmentType;
 				usersController.unequipItem(req, res, next);
@@ -129,8 +136,8 @@ router.route('/:userId/inv/equipped/all').get(
 	(req, res) => {
 		let equippedItems = [];
 		Object.values(res.locals.userData.equippedItems).forEach(equippedItemId => {
-			if(equippedItemId !== '')
-				equippedItems.push(res.locals.inventory.filter(i => {return i.documentId === equippedItemId}));
+			if (equippedItemId !== '')
+				equippedItems.push(res.locals.inventory.filter(i => { return i.documentId === equippedItemId }));
 		});
 		return res.status(200).send(equippedItems);
 	}
@@ -154,8 +161,8 @@ router.route('/:userId/inv/equipped/:slot').get(
 	(req, res) => {
 		let equippedItem = {};
 		const equippedItemId = res.locals.userData.equippedItems[req.params.slot];
-		if(equippedItemId !== '')
-			equippedItem = res.locals.inventory.filter(i => {return i.documentId === equippedItemId})[0];
+		if (equippedItemId !== '')
+			equippedItem = res.locals.inventory.filter(i => { return i.documentId === equippedItemId })[0];
 		return res.status(equippedItem.documentId ? 200 : 404).send(equippedItem);
 	}
 );
@@ -167,7 +174,7 @@ router.route('/:userId/inv/equip/:invItemId').post(
 		usersController.getInventoryItemById,
 		usersController.getUserById,
 		usersController.equipItem
-	], 
+	],
 	(req, res) => {
 		return res.status(200).send({
 			message: `Equipped ${req.params.invItemId} to ${req.body.slot}`,
@@ -180,7 +187,7 @@ router.route('/:userId/inv/unequip/:slot').post(
 	[
 		usersController.getUserById,
 		usersController.unequipItem
-	], 
+	],
 	(req, res) => {
 		return res.status(200).send({
 			message: `Unequipped ${req.params.slot}`,
@@ -196,7 +203,7 @@ router.route('/:userId/inv/buy/:itemId').post(
 		usersController.getUserById,
 		(req, res, next) => {
 			res.locals.transactionAmount = -res.locals.item.goldValue;
-			if(res.locals.transactionAmount > 0)
+			if (res.locals.transactionAmount > 0)
 				res.locals.transactionAmount *= -1;
 			next();
 		},
@@ -208,7 +215,7 @@ router.route('/:userId/inv/buy/:itemId').post(
 			message: 'Successfully purchased item.',
 			inventoryItemId: res.locals.invItemId,
 			inventoryItem: res.locals.invItem,
-			
+
 		});
 	}
 );
