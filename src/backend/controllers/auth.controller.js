@@ -9,6 +9,7 @@ const verifyUserToken = async function (req, res, next) {
 	const auth = getAdminApp().auth();
 	const token = req.body.idToken;
 	try {
+		// TODO: Also verify user is logged in
 		const result = await auth.verifyIdToken(token);
 		res.locals.authUserResult = result;
 		next();
@@ -69,8 +70,16 @@ const signInWithEmail = async function (req, res, next) {
 		return res.status(400).send(`Error signing in: ${e}`);
 	}
 };
+
 const signOut = async function (req, res, next) {
-	res.status(400).send('TODO');
+	const auth = getAuth();
+	try {
+		await auth.signOut();
+		next();
+	}
+	catch (e) {
+		return res.status(400).send(`Error signing out: ${e}`);
+	}
 };
 
 // #endregion

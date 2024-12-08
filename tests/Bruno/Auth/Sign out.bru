@@ -1,0 +1,18 @@
+meta {
+  name: Sign out
+  type: http
+  seq: 6
+}
+
+get {
+  url: http://localhost:3030/auth/signout
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "email": "testuser@gmail.com",
+    "password": "P@sswORd!123"
+  }
+}

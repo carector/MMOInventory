@@ -39,6 +39,10 @@ router.route('/signin').get([authController.signInWithEmail], (req, res) => {
 	res.send(res.locals.authUserResult);
 });
 
+router.route('/signout').get([authController.signOut], (req, res) => {
+	res.send({ message: "Successfully signed out" });
+});
+
 router.route('/verify').get([authController.verifyUserToken], (req, res) => {
 	res.send(res.locals.authUserResult);
 });
